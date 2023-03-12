@@ -1,18 +1,13 @@
-﻿namespace Application.Services;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace Application.Services;
 
 public class ServiceAttribute : Attribute
 {
-    public ServiceType Type { get; init; }
+    public ServiceLifetime Lifetime { get; init; }
 
-    public ServiceAttribute(ServiceType type)
+    public ServiceAttribute(ServiceLifetime lifetime)
     {
-        Type = type;
+        Lifetime = lifetime;
     }
-}
-
-public enum ServiceType
-{
-    Transient,
-    Scoped,
-    Singleton
 }

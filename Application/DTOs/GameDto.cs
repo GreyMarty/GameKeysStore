@@ -1,4 +1,6 @@
-﻿namespace Application.Models;
+﻿using Application.Models;
+
+namespace Application.DTOs;
 
 public class GameDto
 {

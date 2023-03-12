@@ -1,9 +1,10 @@
 ﻿using Domain.Entities;
 using Domain.Repositories;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Services;
 
-[Service(ServiceType.Scoped)]
+[Service(ServiceLifetime.Scoped)]
 public class DeveloperService : IDeveloperService
 {
     private readonly IDevelopersRepo _developersRepo;

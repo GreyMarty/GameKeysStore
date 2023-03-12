@@ -18,23 +18,14 @@ internal static class ServiceLocator
 
         foreach (var serviceWithAttribute in servicesWithAttributes)
         {
-            var serviceType = serviceWithAttribute.ServiceType;
-            var interfaceType = serviceType.GetInterfaces().FirstOrDefault();
+            var implementationType = serviceWithAttribute.ServiceType;
+            var serviceType = implementationType.GetInterfaces().FirstOrDefault();
+            var lifetime = serviceWithAttribute.Attribute.Lifetime;
 
-            switch (serviceWithAttribute.Attribute.Type)
-            {
-                case ServiceType.Scoped:
-                    services.AddScoped(interfaceType, serviceType);
-                    break;
-
-                case ServiceType.Transient:
-                    services.AddTransient(interfaceType, serviceType);
-                    break;
-
-                case ServiceType.Singleton:
-                    services.AddSingleton(interfaceType, serviceType);
-                    break;
-            }
+            services.Add(serviceType is null
+                ? new ServiceDescriptor(implementationType, lifetime)
+                : new ServiceDescriptor(serviceType, implementationType, lifetime)
+            );
         }
     }
 }

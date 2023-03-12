@@ -1,16 +1,17 @@
-﻿using Application.Models;
+﻿using Application.DTOs;
 using Application.Results;
 using Application.Validation;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Repositories;
 using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 using OneOf;
 using OneOf.Types;
 
 namespace Application.Services;
 
-[Service(ServiceType.Scoped)]
+[Service(ServiceLifetime.Scoped)]
 public class GameService : IGamesService
 {
     private readonly IGamesRepo _gamesRepo;
@@ -42,6 +43,7 @@ public class GameService : IGamesService
                 options
                     .Include(e => e.Developer)
                     .Include(e => e.RecommendedSystemRequirements)
+                    .Include(e => e.Keys)
             )
             .ToArray();
     }
@@ -59,9 +61,6 @@ public class GameService : IGamesService
         var developer = _developerService.GetOrCreate(model.Developer.Name);
 
         var game = _mapper.Map<Game>(model);
-        game.Id = 0;
-        game.Developer = null!;
-        game.DeveloperId = developer.Id;
 
         return _gamesRepo.Add(game);
     }
@@ -80,7 +79,8 @@ public class GameService : IGamesService
             options.Include(e => e.RecommendedSystemRequirements)
         );
 
-        if (sourceGame is null) return new NotFound();
+        if (sourceGame is null)
+            return new NotFound();
 
         var developer = _developerService.GetOrCreate(model.Developer.Name);
 
@@ -90,7 +90,7 @@ public class GameService : IGamesService
         );
 
         var game = _mapper.Map(model, sourceGame);
-        game.DeveloperId = developer.Id;
+        game.DeveloperId = 0;
 
         return _gamesRepo.Update(game)!;
     }

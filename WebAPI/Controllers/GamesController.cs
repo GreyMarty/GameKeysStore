@@ -1,12 +1,12 @@
-﻿using Application.Models;
+﻿using Application.DTOs;
 using Application.Services;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers;
 
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/[controller]")]
 public class GamesController : ControllerBase
 {
     private readonly IGamesService _gamesService;
@@ -21,8 +21,7 @@ public class GamesController : ControllerBase
     [HttpGet]
     public IActionResult GetGames()
     {
-        var games = _gamesService.GetAll();
-        return Ok(games.Select(x => _mapper.Map<GameDto>(x)));
+        return Ok(_mapper.Map<IEnumerable<GameDto>>(_gamesService.GetAll()));
     }
 
 
