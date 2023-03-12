@@ -2,6 +2,6 @@
 
 namespace Domain.Repositories;
 
-public interface IKeysRepo : IRepo<Developer>
+public interface IKeysRepo : IRepo<Key>
 {
 }

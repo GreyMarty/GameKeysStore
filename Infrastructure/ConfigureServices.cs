@@ -11,5 +11,7 @@ public static class ConfigureServices
         services.AddScoped<IGamesRepo, GamesRepo>();
         services.AddScoped<IDevelopersRepo, DevelopersRepo>();
         services.AddScoped<ISystemRequirementsRepo, SystemRequirementsRepo>();
+        services.AddScoped<IKeysRepo, KeysRepo>();
+        services.AddScoped<IPlatformsRepo, PlatformsRepo>();
     }
 }

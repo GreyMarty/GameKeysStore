@@ -13,4 +13,6 @@ public class Game : EntityBase
 
     public int RecommendedSystemRequirementsId { get; set; }
     public SystemRequirements RecommendedSystemRequirements { get; set; }
+
+    public virtual IEnumerable<Key> Keys { get; set; }
 }
