@@ -1,8 +1,10 @@
 ﻿using Application.DTOs;
 using Application.Results;
+using Application.Validation;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Repositories;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using OneOf;
 using OneOf.Types;
@@ -17,17 +19,20 @@ public class KeyService : IKeyService
     private readonly IPlatformService _platformService;
 
     private readonly IMapper _mapper;
+    private readonly IValidator<KeyDto> _validator;
 
     public KeyService(
         IKeysRepo keysRepo,
         IGamesRepo gamesRepo,
         IPlatformService platformService,
-        IMapper mapper)
+        IMapper mapper,
+        IValidator<KeyDto> validator)
     {
         _keysRepo = keysRepo;
         _gamesRepo = gamesRepo;
         _platformService = platformService;
         _mapper = mapper;
+        _validator = validator;
     }
 
     public IEnumerable<Key> GetAll()
@@ -54,6 +59,11 @@ public class KeyService : IKeyService
         if (_keysRepo.Any(e => e.KeyString == model.KeyString))
             return new ValidationFailed(nameof(model.KeyString), $"Key '{model.KeyString}' already exists");
 
+        var validationResult = _validator.Validate(model);
+
+        if (!validationResult.IsValid)
+            return new ValidationFailed(_mapper.Map<IEnumerable<ValidationError>>(validationResult.Errors));
+
         model.Platform.Name = model.Platform.Name.ToLower();
         var platform = _platformService.GetOrCreate(model.Platform);
 
@@ -69,6 +79,11 @@ public class KeyService : IKeyService
     {
         if (_keysRepo.Any(e => e.Id != keyId && e.KeyString == model.KeyString))
             return new ValidationFailed(nameof(model.KeyString), $"Key '{model.KeyString}' already exists");
+
+        var validationResult = _validator.Validate(model);
+
+        if (!validationResult.IsValid)
+            return new ValidationFailed(_mapper.Map<IEnumerable<ValidationError>>(validationResult.Errors));
 
         var sourceKey = _keysRepo.Get(keyId);
 
