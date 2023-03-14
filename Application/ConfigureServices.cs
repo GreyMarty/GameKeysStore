@@ -10,9 +10,6 @@ public static class ConfigureServices
     {
         var assembly = Assembly.GetExecutingAssembly();
 
-        // services.AddScoped<IGamesService, GameService>();
-        // services.AddScoped<IDeveloperService, DeveloperService>();
-
         services.AddMarkedServices(assembly);
 
         services.AddAutoMapper(options => { options.AddMaps(assembly); });

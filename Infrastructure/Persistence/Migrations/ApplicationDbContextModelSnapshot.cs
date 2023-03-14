@@ -185,49 +185,6 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("Purchases");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Role", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Roles");
-                });
-
-            modelBuilder.Entity("Domain.Entities.RoleMembership", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RoleMemberships");
-                });
-
             modelBuilder.Entity("Domain.Entities.SystemRequirements", b =>
                 {
                     b.Property<int>("Id")
@@ -277,8 +234,21 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("RefreshTokenExpiresAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("RegisteredOn")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("RoleFlags")
+                        .HasColumnType("decimal(20,0)");
+
+                    b.Property<string>("Salt")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -328,7 +298,7 @@ namespace Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.Key", b =>
                 {
                     b.HasOne("Domain.Entities.Game", "Game")
-                        .WithMany()
+                        .WithMany("Keys")
                         .HasForeignKey("GameId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -363,25 +333,6 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("Key");
                 });
 
-            modelBuilder.Entity("Domain.Entities.RoleMembership", b =>
-                {
-                    b.HasOne("Domain.Entities.Role", "Role")
-                        .WithMany("Members")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.User", "User")
-                        .WithMany("Memberships")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Domain.Entities.Customer", b =>
                 {
                     b.Navigation("Purchases");
@@ -392,14 +343,14 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("Games");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Game", b =>
+                {
+                    b.Navigation("Keys");
+                });
+
             modelBuilder.Entity("Domain.Entities.Key", b =>
                 {
                     b.Navigation("Purchase");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Role", b =>
-                {
-                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("Domain.Entities.SystemRequirements", b =>
@@ -411,8 +362,6 @@ namespace Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Navigation("Customer");
-
-                    b.Navigation("Memberships");
                 });
 #pragma warning restore 612, 618
         }

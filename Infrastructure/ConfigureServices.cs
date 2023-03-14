@@ -1,4 +1,6 @@
-﻿using Domain.Repositories;
+﻿using System.Reflection;
+using Application;
+using Domain.Repositories;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,5 +15,8 @@ public static class ConfigureServices
         services.AddScoped<ISystemRequirementsRepo, SystemRequirementsRepo>();
         services.AddScoped<IKeysRepo, KeysRepo>();
         services.AddScoped<IPlatformsRepo, PlatformsRepo>();
+        services.AddScoped<IUsersRepo, UsersRepo>();
+
+        services.AddMarkedServices(Assembly.GetExecutingAssembly());
     }
 }

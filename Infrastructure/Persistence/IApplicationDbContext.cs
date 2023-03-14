@@ -21,9 +21,5 @@ public interface IApplicationDbContext
 
     public DbSet<SystemRequirements> SystemRequirements { get; set; }
 
-    public DbSet<Role> Roles { get; set; }
-
-    public DbSet<RoleMembership> RoleMemberships { get; set; }
-
     public int SaveChanges();
 }

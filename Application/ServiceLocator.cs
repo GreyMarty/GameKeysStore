@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Application;
 
-internal static class ServiceLocator
+public static class ServiceLocator
 {
     public static void AddMarkedServices(this IServiceCollection services, Assembly assembly)
     {
