@@ -4,6 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Services;
 
+public interface IDeveloperService
+{
+    public Developer GetOrCreate(string name);
+}
+
 [Service(ServiceLifetime.Scoped)]
 public class DeveloperService : IDeveloperService
 {

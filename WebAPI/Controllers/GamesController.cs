@@ -9,19 +9,19 @@ namespace WebAPI.Controllers;
 [Route("api/[controller]")]
 public class GamesController : ControllerBase
 {
-    private readonly IGamesService _gamesService;
+    private readonly IGameService _gameService;
     private readonly IMapper _mapper;
 
-    public GamesController(IGamesService gamesService, IMapper mapper)
+    public GamesController(IGameService gameService, IMapper mapper)
     {
-        _gamesService = gamesService;
+        _gameService = gameService;
         _mapper = mapper;
     }
 
     [HttpGet]
     public IActionResult GetGames()
     {
-        return Ok(_mapper.Map<IEnumerable<GameDto>>(_gamesService.GetAll()));
+        return Ok(_mapper.Map<IEnumerable<GameDto>>(_gameService.GetAll()));
     }
 
 
@@ -30,7 +30,7 @@ public class GamesController : ControllerBase
     {
         IActionResult response = Problem();
 
-        _gamesService.Create(model)
+        _gameService.Create(model)
             .Match(
                 _ => response = Ok(),
                 failed => response = BadRequest(failed)
@@ -45,7 +45,7 @@ public class GamesController : ControllerBase
     {
         IActionResult response = Problem();
 
-        _gamesService.Update(gameId, model)
+        _gameService.Update(gameId, model)
             .Match(
                 _ => response = Ok(),
                 failed => response = BadRequest(failed),
@@ -61,7 +61,7 @@ public class GamesController : ControllerBase
     {
         IActionResult response = Problem();
 
-        _gamesService.Delete(gameId)
+        _gameService.Delete(gameId)
             .Match(
                 _ => response = Ok(),
                 _ => response = NotFound()

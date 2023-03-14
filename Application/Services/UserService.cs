@@ -4,6 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Services;
 
+public interface IUserService
+{
+    IEnumerable<User> GetAll();
+}
+
 [Service(ServiceLifetime.Scoped)]
 public class UserService : IUserService
 {

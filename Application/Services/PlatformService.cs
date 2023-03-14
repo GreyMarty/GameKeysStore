@@ -6,6 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Services;
 
+public interface IPlatformService
+{
+    public Platform GetOrCreate(PlatformDto model);
+}
+
 [Service(ServiceLifetime.Scoped)]
 public class PlatformService : IPlatformService
 {

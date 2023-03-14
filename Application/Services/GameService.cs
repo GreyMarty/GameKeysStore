@@ -11,8 +11,19 @@ using OneOf.Types;
 
 namespace Application.Services;
 
+public interface IGameService
+{
+    public IEnumerable<Game> GetAll();
+
+    public OneOf<Game, ValidationFailed> Create(GameDto model);
+
+    public OneOf<Game, ValidationFailed, NotFound> Update(int id, GameDto model);
+
+    public OneOf<Success, NotFound> Delete(int gameId);
+}
+
 [Service(ServiceLifetime.Scoped)]
-public class GameService : IGamesService
+public class GameService : IGameService
 {
     private readonly IGamesRepo _gamesRepo;
     private readonly ISystemRequirementsRepo _systemRequirementsRepo;

@@ -25,4 +25,8 @@
         <ProjectReference Include="..\Domain\Domain.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Compile Remove="Persistence\Migrations\20230314101639_ReworkRoles.Designer.cs"/>
+    </ItemGroup>
+
 </Project>
