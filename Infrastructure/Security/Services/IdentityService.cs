@@ -5,6 +5,8 @@ using Application.Validation;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Repositories;
+using FluentValidation;
+using Infrastructure.Security.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using OneOf;
 using OneOf.Types;
@@ -26,13 +28,18 @@ public interface IIdentityService
 [Service(ServiceLifetime.Scoped)]
 public class IdentityService : IIdentityService
 {
+    private readonly IPasswordHelper _passwordHelper;
     private readonly IUsersRepo _usersRepo;
     private readonly IMapper _mapper;
+    private readonly IValidator<RegistrationUserDto> _registrationUserValidator;
 
-    public IdentityService(IUsersRepo usersRepo, IMapper mapper)
+    public IdentityService(IPasswordHelper passwordHelper, IUsersRepo usersRepo, IMapper mapper,
+        IValidator<RegistrationUserDto> registrationUserValidator)
     {
+        _passwordHelper = passwordHelper;
         _usersRepo = usersRepo;
         _mapper = mapper;
+        _registrationUserValidator = registrationUserValidator;
     }
 
     public OneOf<User, NotFound> FindUserByLogin(string login)
@@ -43,6 +50,11 @@ public class IdentityService : IIdentityService
 
     public OneOf<User, ValidationFailed> RegisterUser(RegistrationUserDto model)
     {
+        var validationResult = _registrationUserValidator.Validate(model);
+
+        if (!validationResult.IsValid)
+            return new ValidationFailed(_mapper.Map<IEnumerable<ValidationError>>(validationResult.Errors));
+
         var errors = new List<ValidationError>();
 
         if (_usersRepo.Any(e => e.UserName == model.UserName))
@@ -53,8 +65,8 @@ public class IdentityService : IIdentityService
 
         if (errors.Count > 0) return new ValidationFailed(errors);
 
-        var salt = PasswordHelper.GenerateSalt();
-        var passwordHash = PasswordHelper.ComputeHash(model.Password, salt);
+        var salt = _passwordHelper.GenerateSalt();
+        var passwordHash = _passwordHelper.ComputeHash(model.Password, salt);
 
         var user = _mapper.Map<User>(model);
         user.Salt = salt;
