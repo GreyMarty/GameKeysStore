@@ -15,4 +15,7 @@ public static class ValidationMessages
 
     public static string MustNotBeNegative =>
         @"{PropertyName} must not be negative";
+
+    public static string MustBeValidEmail =>
+        @"{PropertyName} must be valid e-mail address";
 }
