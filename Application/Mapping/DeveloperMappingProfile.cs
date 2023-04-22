@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Models.ReadModels;
+using Application.Models.WriteModels;
 using AutoMapper;
 using Domain.Entities;
 
@@ -8,7 +9,7 @@ public class DeveloperMappingProfile : Profile
 {
     public DeveloperMappingProfile()
     {
-        CreateMap<Developer, DeveloperDto>();
-        CreateMap<DeveloperDto, Developer>();
+        CreateMap<Developer, DeveloperReadModel>();
+        CreateMap<DeveloperWriteModel, Developer>();
     }
 }

@@ -1,55 +1,51 @@
 ﻿using System.Security.Claims;
-using Application.Results;
+using Application;
 using Application.Services;
-using Domain.Repositories;
+using Infrastructure.Security.Exceptions;
 using Infrastructure.Security.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-using OneOf;
-using OneOf.Types;
 
 namespace Infrastructure.Security.Services;
 
-public interface ITokenService
-{
-    public OneOf<TokenPair, ValidationFailed, NotFound> CreateToken(string login, string password);
-}
-
 [Service(ServiceLifetime.Scoped)]
-public class TokenService : ITokenService
+public class TokenService
 {
+    private readonly IApplicationDbContext _db;
     private readonly ITokenHelper _tokenHelper;
     private readonly IPasswordHelper _passwordHelper;
     private readonly IIdentityService _identityService;
-    private readonly IUsersRepo _usersRepo;
 
     public TokenService(
         ITokenHelper tokenHelper,
         IPasswordHelper passwordHelper,
-        IUsersRepo usersRepo,
-        IIdentityService identityService)
+        IIdentityService identityService,
+        IApplicationDbContext db)
     {
         _tokenHelper = tokenHelper;
         _passwordHelper = passwordHelper;
-        _usersRepo = usersRepo;
         _identityService = identityService;
+        _db = db;
     }
 
-    public OneOf<TokenPair, ValidationFailed, NotFound> CreateToken(string login, string password)
+    public async Task<TokenPair> CreateTokenAsync(string login, string password)
     {
-        var userFound = _identityService.FindUserByLogin(login);
+        var user = await _identityService.FindUserByLoginAsync(login);
 
-        if (userFound.IsT1) return new NotFound();
-
-        var user = userFound.AsT0;
+        if (user is null)
+        {
+            throw new UserNotFoundException();
+        }
 
         if (!_passwordHelper.VerifyPassword(password, user.Password, user.Salt))
-            return new ValidationFailed(nameof(password), "Wrong password");
+        {
+            throw new WrongPasswordException();
+        }
 
         var refreshToken = _tokenHelper.GenerateRefreshToken();
         user.RefreshToken = refreshToken.TokenString;
         user.RefreshTokenExpiresAt = refreshToken.ExpiresAt;
 
-        _usersRepo.Update(user);
+        _db.Users.Update(user);
 
         var claims = _identityService.GetRolesFromFlags((RoleFlags)user.RoleFlags)
             .Select(r => new Claim(ClaimTypes.Role, r))

@@ -1,9 +1,9 @@
-﻿using Application.DTOs;
+﻿using Application.Models.WriteModels;
 using FluentValidation;
 
 namespace Application.Validation;
 
-public class PlatformValidator : AbstractValidator<PlatformDto>
+public class PlatformValidator : AbstractValidator<PlatformWriteModel>
 {
     public PlatformValidator()
     {

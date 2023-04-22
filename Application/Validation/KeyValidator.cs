@@ -1,9 +1,9 @@
-﻿using Application.DTOs;
+﻿using Application.Models.WriteModels;
 using FluentValidation;
 
 namespace Application.Validation;
 
-public class KeyValidator : AbstractValidator<KeyDto>
+public class KeyValidator : AbstractValidator<KeyWriteModel>
 {
     public KeyValidator()
     {

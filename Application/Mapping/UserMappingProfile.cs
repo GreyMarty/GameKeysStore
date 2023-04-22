@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Models.ReadModels;
+using Application.Models.WriteModels;
 using AutoMapper;
 using Domain.Entities;
 
@@ -8,14 +9,8 @@ public class UserMappingProfile : Profile
 {
     public UserMappingProfile()
     {
-        CreateMap<User, UserDto>();
-        CreateMap<UserDto, User>()
-            .ForMember(
-                dest => dest.Id,
-                opt => opt.Ignore()
-            ).ForMember(
-                dest => dest.RegisteredOn,
-                opt => opt.Ignore()
-            );
+        CreateMap<User, UserReadModel>();
+        CreateMap<UserWriteModel, User>()
+            .ForMember(x => x.Password, opt => opt.Ignore());
     }
 }

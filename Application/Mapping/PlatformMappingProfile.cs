@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Models.ReadModels;
+using Application.Models.WriteModels;
 using AutoMapper;
 using Domain.Entities;
 
@@ -8,7 +9,7 @@ public class PlatformMappingProfile : Profile
 {
     public PlatformMappingProfile()
     {
-        CreateMap<Platform, PlatformDto>();
-        CreateMap<PlatformDto, Platform>();
+        CreateMap<Platform, PlatformReadModel>();
+        CreateMap<PlatformWriteModel, Platform>();
     }
 }

@@ -1,9 +1,9 @@
-﻿using Application.DTOs;
+﻿using Application.Models.WriteModels;
 using FluentValidation;
 
 namespace Application.Validation;
 
-public class GameValidator : AbstractValidator<GameDto>
+public class GameValidator : AbstractValidator<GameWriteModel>
 {
     public GameValidator()
     {

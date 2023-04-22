@@ -2,7 +2,7 @@
 
 namespace Application.Results;
 
-public class ValidationFailed
+public struct ValidationFailed
 {
     public IEnumerable<ValidationError> Errors { get; } = Enumerable.Empty<ValidationError>();
 

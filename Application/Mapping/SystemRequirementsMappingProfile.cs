@@ -1,4 +1,5 @@
-﻿using Application.Models;
+﻿using Application.Models.ReadModels;
+using Application.Models.WriteModels;
 using AutoMapper;
 using Domain.Entities;
 
@@ -8,7 +9,7 @@ public class SystemRequirementsMappingProfile : Profile
 {
     public SystemRequirementsMappingProfile()
     {
-        CreateMap<SystemRequirements, SystemRequirementsDto>();
-        CreateMap<SystemRequirementsDto, SystemRequirements>();
+        CreateMap<SystemRequirements, SytemRequirementsReadModel>();
+        CreateMap<SytemRequirementsWriteModel, SystemRequirements>();
     }
 }

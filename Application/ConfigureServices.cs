@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
+using Application.Behaviours;
 using FluentValidation;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application;
@@ -15,5 +17,8 @@ public static class ConfigureServices
         services.AddAutoMapper(options => { options.AddMaps(assembly); });
 
         services.AddValidatorsFromAssembly(assembly);
+
+        services.AddMediatR(assembly);
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
     }
 }

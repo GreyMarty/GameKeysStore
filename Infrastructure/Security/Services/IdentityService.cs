@@ -1,138 +1,110 @@
-﻿using Application.DTOs;
-using Application.Results;
-using Application.Services;
-using Application.Validation;
+﻿using Application.Services;
 using AutoMapper;
 using Domain.Entities;
-using Domain.Repositories;
 using FluentValidation;
 using Infrastructure.Security.Helpers;
 using Microsoft.Extensions.DependencyInjection;
-using OneOf;
-using OneOf.Types;
+using Application.Models.WriteModels;
+using Application;
+using Microsoft.EntityFrameworkCore;
+using FluentValidation.Results;
 
 namespace Infrastructure.Security.Services;
 
 public interface IIdentityService
 {
-    OneOf<User, NotFound> FindUserByLogin(string login);
-    OneOf<User, ValidationFailed> RegisterUser(RegistrationUserDto model);
-    OneOf<Success, NotFound> AssignUserToRole(string login, RoleFlags flags);
-    OneOf<Success, NotFound> RemoveUserFromRole(string login, RoleFlags flags);
-    OneOf<Success, NotFound> SetUserRoles(string login, RoleFlags flags);
-    public OneOf<Success, NotFound> SetUserRoles(int userId, RoleFlags flags);
+    Task AssignUserToRoleAsync(User user, RoleFlags flags);
+    Task<User?> FindUserByLoginAsync(string login);
+    IEnumerable<string> GetRolesFromFlags(RoleFlags flags);
     bool HasUserRoles(User user, RoleFlags roles);
-    public IEnumerable<string> GetRolesFromFlags(RoleFlags flags);
+    Task<User> RegisterUserAsync(UserWriteModel model);
+    Task RemoveUserFromRoleAsync(User user, RoleFlags flags);
+    Task SetUserRolesAsync(User user, RoleFlags flags);
 }
 
 [Service(ServiceLifetime.Scoped)]
 public class IdentityService : IIdentityService
 {
+    private readonly IApplicationDbContext _db;
     private readonly IPasswordHelper _passwordHelper;
-    private readonly IUsersRepo _usersRepo;
     private readonly IMapper _mapper;
-    private readonly IValidator<RegistrationUserDto> _registrationUserValidator;
+    private readonly IValidator<UserWriteModel> _userValidator;
 
-    public IdentityService(IPasswordHelper passwordHelper, IUsersRepo usersRepo, IMapper mapper,
-        IValidator<RegistrationUserDto> registrationUserValidator)
+    public IdentityService(IPasswordHelper passwordHelper, IApplicationDbContext applicationDbContext, IMapper mapper,
+        IValidator<UserWriteModel> userValidator)
     {
+        _db = applicationDbContext;
         _passwordHelper = passwordHelper;
-        _usersRepo = usersRepo;
         _mapper = mapper;
-        _registrationUserValidator = registrationUserValidator;
+        _userValidator = userValidator;
     }
 
-    public OneOf<User, NotFound> FindUserByLogin(string login)
+    public async Task<User?> FindUserByLoginAsync(string login)
     {
-        var user = _usersRepo.Get(e => e.UserName == login || e.Email == login);
-        return user is null ? new NotFound() : user;
+        return await _db.Users.FirstOrDefaultAsync(x => x.UserName == login || x.Email == login);
     }
 
-    public OneOf<User, ValidationFailed> RegisterUser(RegistrationUserDto model)
+    public async Task<User> RegisterUserAsync(UserWriteModel model)
     {
-        var validationResult = _registrationUserValidator.Validate(model);
+        var validationResult = _userValidator.Validate(model);
 
         if (!validationResult.IsValid)
-            return new ValidationFailed(_mapper.Map<IEnumerable<ValidationError>>(validationResult.Errors));
+        {
+            throw new ValidationException(validationResult.Errors);
+        }
 
-        var errors = new List<ValidationError>();
+        var errors = new List<ValidationFailure>();
 
-        if (_usersRepo.Any(e => e.UserName == model.UserName))
-            errors.Add(new ValidationError(nameof(model.UserName), "User with the same username already exists"));
+        if (_db.Users.Any(e => e.UserName == model.UserName))
+            errors.Add(new ValidationFailure(nameof(model.UserName), "User with the same username already exists"));
 
-        if (_usersRepo.Any(e => e.Email == model.Email))
-            errors.Add(new ValidationError(nameof(model.Email), "User with the same e-mail already exists"));
+        if (_db.Users.Any(e => e.Email == model.Email))
+            errors.Add(new ValidationFailure(nameof(model.Email), "User with the same e-mail already exists"));
 
-        if (errors.Count > 0) return new ValidationFailed(errors);
+        if (errors.Count > 0)
+        {
+            throw new ValidationException(errors);
+        }
 
         var salt = _passwordHelper.GenerateSalt();
-        var passwordHash = _passwordHelper.ComputeHash(model.Password, salt);
+        var passwordHash = _passwordHelper.ComputeHash(model.Password!, salt);
 
         var user = _mapper.Map<User>(model);
         user.Salt = salt;
         user.Password = passwordHash;
         user.RoleFlags = (ulong)RoleFlags.User;
-        return _usersRepo.Add(user);
+
+        await _db.Users.AddAsync(user);
+        await _db.SaveChangesAsync();
+
+        return user;  
     }
 
-    public OneOf<Success, NotFound> AssignUserToRole(string login, RoleFlags flags)
+    public async Task AssignUserToRoleAsync(User user, RoleFlags flags)
     {
-        var findResult = FindUserByLogin(login);
-
-        if (findResult.IsT1) return new NotFound();
-
-        var user = findResult.AsT0;
-
         var userRoles = (RoleFlags)user.RoleFlags;
         userRoles |= flags;
 
         user.RoleFlags = (ulong)userRoles;
-        _usersRepo.Update(user);
-
-        return new Success();
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
     }
 
-    public OneOf<Success, NotFound> RemoveUserFromRole(string login, RoleFlags flags)
+    public async Task RemoveUserFromRoleAsync(User user, RoleFlags flags)
     {
-        var findResult = FindUserByLogin(login);
-
-        if (findResult.IsT1) return new NotFound();
-
-        var user = findResult.AsT0;
-
         var userRoles = (RoleFlags)user.RoleFlags;
-        userRoles |= ~flags;
+        userRoles &= ~flags;
 
         user.RoleFlags = (ulong)userRoles;
-        _usersRepo.Update(user);
-
-        return new Success();
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
     }
 
-    public OneOf<Success, NotFound> SetUserRoles(string login, RoleFlags flags)
+    public async Task SetUserRolesAsync(User user, RoleFlags flags)
     {
-        var findResult = FindUserByLogin(login);
-
-        if (findResult.IsT1) return new NotFound();
-
-        var user = findResult.AsT0;
-
         user.RoleFlags = (ulong)flags;
-        _usersRepo.Update(user);
-
-        return new Success();
-    }
-
-    public OneOf<Success, NotFound> SetUserRoles(int userId, RoleFlags flags)
-    {
-        var user = _usersRepo.Get(userId);
-
-        if (user is null) return new NotFound();
-
-        user.RoleFlags = (ulong)flags;
-        _usersRepo.Update(user);
-
-        return new Success();
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
     }
 
     public bool HasUserRoles(User user, RoleFlags roles)
@@ -143,7 +115,11 @@ public class IdentityService : IIdentityService
     public IEnumerable<string> GetRolesFromFlags(RoleFlags flags)
     {
         foreach (var flag in Enum.GetValues<RoleFlags>())
+        {
             if (flags.HasFlag(flag))
+            {
                 yield return Enum.GetName(flag)!.ToLower();
+            }
+        }
     }
 }

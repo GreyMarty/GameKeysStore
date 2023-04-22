@@ -1,4 +1,5 @@
-﻿using Application.DTOs;
+﻿using Application.Models.ReadModels;
+using Application.Models.WriteModels;
 using AutoMapper;
 using Domain.Entities;
 
@@ -8,17 +9,7 @@ public class KeyMappingProfile : Profile
 {
     public KeyMappingProfile()
     {
-        CreateMap<Key, KeyDto>();
-        CreateMap<KeyDto, Key>()
-            .ForMember(
-                dest => dest.Id,
-                opt => opt.Ignore()
-            ).ForMember(
-                dest => dest.GameId,
-                opt => opt.Ignore()
-            ).ForMember(
-                dest => dest.Purchased,
-                opt => opt.Ignore()
-            );
+        CreateMap<Key, KeyReadModel>();
+        CreateMap<KeyWriteModel, Key>();
     }
 }

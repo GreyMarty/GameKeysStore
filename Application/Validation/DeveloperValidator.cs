@@ -1,9 +1,9 @@
-﻿using Application.DTOs;
+﻿using Application.Models.WriteModels;
 using FluentValidation;
 
 namespace Application.Validation;
 
-public class DeveloperValidator : AbstractValidator<DeveloperDto>
+public class DeveloperValidator : AbstractValidator<DeveloperWriteModel>
 {
     public DeveloperValidator()
     {

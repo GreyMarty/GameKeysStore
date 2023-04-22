@@ -1,9 +1,9 @@
-﻿using Application.Models;
+﻿using Application.Models.WriteModels;
 using FluentValidation;
 
 namespace Application.Validation;
 
-public class SystemRequirementsValidator : AbstractValidator<SystemRequirementsDto>
+public class SystemRequirementsValidator : AbstractValidator<SytemRequirementsWriteModel>
 {
     public SystemRequirementsValidator()
     {
