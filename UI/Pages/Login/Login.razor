@@ -1,0 +1,64 @@
+﻿@page "/login"
+@using Infrastructure.Security.Exceptions
+@using UI.Authentication
+@using UI.Validation
+@layout EmptyLayout
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudGrid Justify="Justify.Center" Class="align-center" Style="height: 90vh">
+    <MudPaper Elevation="16" Class="pa-8" Style="width: 50%">
+        <MudText Typo="Typo.h4" Class="mb-5">Welcome Back</MudText>
+        <MudForm Model="@_model">
+                <MudTextField @bind-Value="_model.Login"
+							    Label="Username or E-Mail" />
+
+                <MudTextField @bind-Value="_model.Password"
+							    For="@(() => _model.Password)"
+                                InputType="InputType.Password"
+							    Immediate="true"
+							    Label="Password" />
+
+        </MudForm>
+        <div class="mt-10 d-flex justify-content-around align-items-center">
+            <div class="d-flex mt-4">
+                <MudText>Don't have account?</MudText>
+                <MudLink Href="/register" Class="ms-2">Sign Up</MudLink>
+            </div>
+            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Class="ml-auto" OnClick="LoginAsync">Sign In</MudButton>
+        </div>
+    </MudPaper>
+</MudGrid>
+
+@code {
+    private class LoginModel 
+    {
+        public string Login { get; set; }
+        public string Password { get; set; }
+    }
+
+    private LoginModel _model = new LoginModel();
+
+    private CustomAuthenticationStateProvider _customAuthenticationStateProvider;
+
+    private async Task LoginAsync()
+    {
+        _customAuthenticationStateProvider ??= (CustomAuthenticationStateProvider)AuthenticationStateProvider;
+
+        try
+        {
+            await _customAuthenticationStateProvider.LoginAsync(_model.Login, _model.Password);
+            NavigationManager.NavigateTo("/authoruization");
+        }
+        catch (UserNotFoundException)
+        {
+            Snackbar.Add("User does not exist", Severity.Error);
+        }
+        catch (WrongPasswordException)
+        {
+            Snackbar.Add("Wrong password", Severity.Error);
+        }
+    }
+}

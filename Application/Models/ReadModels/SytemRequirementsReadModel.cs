@@ -1,6 +1,6 @@
 ﻿namespace Application.Models.ReadModels;
 
-public class SytemRequirementsReadModel
+public class SystemRequirementsReadModel
 {
     public string OperatingSystem { get; set; } = default!;
     public string Processor { get; set; } = default!;

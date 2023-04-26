@@ -1,0 +1,94 @@
+﻿@page "/register"
+@layout EmptyLayout
+
+@using FluentValidation
+@using Application.Models.WriteModels
+@using Infrastructure.Security.Services
+
+@inject ISnackbar Snackbar
+@inject IValidator<UserWriteModel> Validator
+@inject IIdentityService IdentityService
+@inject NavigationManager NavigationManager
+
+<MudGrid Justify="Justify.Center" Class="align-center" Style="height: 90vh">
+    <MudPaper Elevation="16" Class="pa-8" Style="width: 50%">
+        <MudText Typo="Typo.h4" Class="mb-5">Welcome</MudText>
+        <MudForm Model="@_model" @ref="@_form" Validation="@ValidateValue" ValidationDelay="0">
+                <MudTextField 
+                    @bind-Value="_model.UserName"                              
+					For="@(() => _model.UserName)"
+					Immediate="true"
+					Label="UserName" />
+
+                <MudTextField 
+                    @bind-Value="_model.Email"
+					For="@(() => _model.Email)"
+					Immediate="true"
+					Label="Email" />
+
+                <MudTextField 
+                    @bind-Value="_model.Password"
+					For="@(() => _model.Password)"
+                    InputType="InputType.Password"
+					Immediate="true"
+					Label="Password" />
+
+                <MudTextField 
+                    @bind-Value="_repeatPassword"
+                    InputType="InputType.Password"
+					Immediate="true"
+					Label="Password"
+                    HelperText="Repeat Passord"
+                    Validation="new Func<string, string>(PasswordMatch)"/>
+
+        </MudForm>
+        <div class="mt-10 d-flex justify-content-around align-items-center">
+            <div class="d-flex mt-4">
+                <MudText>Already have an account?</MudText>
+                <MudLink Href="/login" Class="ms-2">Sign In</MudLink>
+            </div>
+            <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Class="ml-auto" OnClick="RegisterUserAsync">Sign Up</MudButton>
+        </div>
+    </MudPaper>
+</MudGrid>
+
+
+@code {
+    private MudForm? _form;
+    private UserWriteModel _model = new();
+
+    private string? _repeatPassword;
+
+    private Func<object, string, IEnumerable<string>> ValidateValue => (model, propertyName) =>
+    {
+        var result = Validator.Validate(ValidationContext<UserWriteModel>.CreateWithOptions((UserWriteModel)model, x => x.IncludeProperties(propertyName)));
+        if (result.IsValid)
+        {
+            return Array.Empty<string>();
+        }
+
+        return result.Errors.Select(e => e.ErrorMessage);
+    };
+
+    private string? PasswordMatch(string password) =>
+        password == _model.Password
+            ? null
+            : "Passwords does not match";
+
+    private async Task RegisterUserAsync()
+    {
+        try
+        {
+            await IdentityService.RegisterUserAsync(_model);
+            NavigationManager.NavigateTo("/login");
+        }
+        catch (ValidationException ex)
+        {
+            foreach(var error in ex.Errors)
+            {
+                Snackbar.Add(error.ErrorMessage, MudBlazor.Severity.Error);
+            }
+        }
+    }
+}
+

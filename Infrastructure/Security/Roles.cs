@@ -1,7 +1,6 @@
 ﻿namespace Infrastructure.Security;
 
-[Flags]
-public enum RoleFlags
+public enum Role
 {
     Admin = 1,
     Manager = 2,
@@ -10,9 +9,9 @@ public enum RoleFlags
 
 public class Roles
 {
-    public static readonly Roles Admin = new(RoleFlags.Admin.ToString().ToLower());
-    public static readonly Roles Manager = new(RoleFlags.Manager.ToString().ToLower());
-    public static readonly Roles User = new(RoleFlags.User.ToString().ToLower());
+    public static readonly Roles Admin = new(Role.Admin.ToString().ToLower());
+    public static readonly Roles Manager = new(Role.Manager.ToString().ToLower());
+    public static readonly Roles User = new(Role.User.ToString().ToLower());
 
     private readonly string _rolesString;
 

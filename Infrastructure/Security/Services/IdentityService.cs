@@ -13,13 +13,11 @@ namespace Infrastructure.Security.Services;
 
 public interface IIdentityService
 {
-    Task AssignUserToRoleAsync(User user, RoleFlags flags);
     Task<User?> FindUserByLoginAsync(string login);
-    IEnumerable<string> GetRolesFromFlags(RoleFlags flags);
-    bool HasUserRoles(User user, RoleFlags roles);
+    bool HasUserRole(User user, Role roles);
     Task<User> RegisterUserAsync(UserWriteModel model);
-    Task RemoveUserFromRoleAsync(User user, RoleFlags flags);
-    Task SetUserRolesAsync(User user, RoleFlags flags);
+    Task SetUserRoleAsync(User user, Role role);
+    string? GetUserRole(User user);
 }
 
 [Service(ServiceLifetime.Scoped)]
@@ -72,7 +70,8 @@ public class IdentityService : IIdentityService
         var user = _mapper.Map<User>(model);
         user.Salt = salt;
         user.Password = passwordHash;
-        user.RoleFlags = (ulong)RoleFlags.User;
+        user.RoleFlags = user.UserName == "admin" ? (ulong)Role.Admin : (ulong)Role.User;
+        user.RegisteredOn = DateTime.UtcNow;
 
         await _db.Users.AddAsync(user);
         await _db.SaveChangesAsync();
@@ -80,9 +79,9 @@ public class IdentityService : IIdentityService
         return user;  
     }
 
-    public async Task AssignUserToRoleAsync(User user, RoleFlags flags)
+    public async Task SetUserRoleAsync(User user, Role flags)
     {
-        var userRoles = (RoleFlags)user.RoleFlags;
+        var userRoles = (Role)user.RoleFlags;
         userRoles |= flags;
 
         user.RoleFlags = (ulong)userRoles;
@@ -90,9 +89,9 @@ public class IdentityService : IIdentityService
         await _db.SaveChangesAsync();
     }
 
-    public async Task RemoveUserFromRoleAsync(User user, RoleFlags flags)
+    public async Task RemoveUserFromRoleAsync(User user, Role flags)
     {
-        var userRoles = (RoleFlags)user.RoleFlags;
+        var userRoles = (Role)user.RoleFlags;
         userRoles &= ~flags;
 
         user.RoleFlags = (ulong)userRoles;
@@ -100,26 +99,31 @@ public class IdentityService : IIdentityService
         await _db.SaveChangesAsync();
     }
 
-    public async Task SetUserRolesAsync(User user, RoleFlags flags)
+    public async Task SetUserRolesAsync(User user, Role flags)
     {
         user.RoleFlags = (ulong)flags;
         _db.Users.Update(user);
         await _db.SaveChangesAsync();
     }
 
-    public bool HasUserRoles(User user, RoleFlags roles)
+    public bool HasUserRole(User user, Role roles)
     {
         return (user.RoleFlags & (ulong)roles) != 0;
     }
 
-    public IEnumerable<string> GetRolesFromFlags(RoleFlags flags)
+    public IEnumerable<string> GetRolesFromFlags(Role flags)
     {
-        foreach (var flag in Enum.GetValues<RoleFlags>())
+        foreach (var flag in Enum.GetValues<Role>())
         {
             if (flags.HasFlag(flag))
             {
                 yield return Enum.GetName(flag)!.ToLower();
             }
         }
+    }
+
+    public string? GetUserRole(User user)
+    {
+        return ((Role)user.RoleFlags).ToString().ToLower();
     }
 }

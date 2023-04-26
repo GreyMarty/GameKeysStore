@@ -21,3 +21,4 @@ internal class GetPlatformsPagedQueryHandler : IRequestHandler<GetPlatformsPaged
         throw new NotImplementedException();
     }
 }
+ 

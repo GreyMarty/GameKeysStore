@@ -1,0 +1,26 @@
+﻿@page "/authoruization"
+@using System.Security.Claims
+
+<AuthorizeView>
+    <Authorized>
+        <h1>UserName: @_user?.Identity?.Name</h1>
+        <h2>@_user?.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value</h2>
+    </Authorized>
+    <NotAuthorized>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> _authenticationState { get; set; }
+    private ClaimsPrincipal? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        var authenticationState = await _authenticationState;
+        _user = authenticationState.User;
+    }
+}

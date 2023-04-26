@@ -10,6 +10,7 @@ public class PlatformMappingProfile : Profile
     public PlatformMappingProfile()
     {
         CreateMap<Platform, PlatformReadModel>();
+        CreateMap<PlatformReadModel, PlatformWriteModel>();
         CreateMap<PlatformWriteModel, Platform>();
     }
 }

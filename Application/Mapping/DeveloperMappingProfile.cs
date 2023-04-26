@@ -10,6 +10,7 @@ public class DeveloperMappingProfile : Profile
     public DeveloperMappingProfile()
     {
         CreateMap<Developer, DeveloperReadModel>();
+        CreateMap<DeveloperReadModel, DeveloperWriteModel>();
         CreateMap<DeveloperWriteModel, Developer>();
     }
 }

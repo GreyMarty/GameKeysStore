@@ -22,6 +22,8 @@ internal class GetGamesPagedQueryHandler : IRequestHandler<GetGamesPagedQuery, I
         var options = new IncludableQueryOptions<Game>();
         options.Include(x => x.Developer);
         options.Include(x => x.RecommendedSystemRequirements);
+        options.Include(x => x.Images);
+        options.Include(x => x.Categories);
         options.OrderByAsc(x => x.Name);
         options.AsNoTracking();
         request.ConfigureOptions?.Invoke(options);

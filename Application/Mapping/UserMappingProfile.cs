@@ -10,6 +10,7 @@ public class UserMappingProfile : Profile
     public UserMappingProfile()
     {
         CreateMap<User, UserReadModel>();
+        CreateMap<UserReadModel, UserWriteModel>();
         CreateMap<UserWriteModel, User>()
             .ForMember(x => x.Password, opt => opt.Ignore());
     }

@@ -30,5 +30,9 @@ public static class Indexes
         builder.Entity<Developer>()
             .HasIndex(e => e.Name)
             .IsUnique();
+
+        builder.Entity<PhysicalFile>()
+            .HasIndex(e => e.Path)
+            .IsUnique();
     }
 }

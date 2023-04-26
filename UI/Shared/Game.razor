@@ -1,0 +1,17 @@
+﻿@using Application.Models.ReadModels
+
+<div class="card h-100">
+    <img class="card-img-top" src="img/game-no-image.jpg" alt="Card image cap">
+    <div class="card-body text-center">
+        <h5 class="card-title">@Model.Name</h5>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <span class="align-middle">$999</span>
+        <a href="#" class="btn btn-outline-success">Purchase</a>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public GameReadModel Model { get; set; }
+}

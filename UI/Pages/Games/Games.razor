@@ -1,0 +1,16 @@
+﻿@page "/games"
+@using Application.Models.ReadModels
+
+<div class="row row-cols-1 row-cols-md-5 g-4" data-bs-theme="dark">
+    @foreach(var game in _games)
+    {
+        <div class="col">
+            <Game Model="@game"/>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly IEnumerable<GameReadModel> _games = Enumerable.Range(1, 10)
+        .Select(x => new GameReadModel { Name = $"Game{x}" });
+}

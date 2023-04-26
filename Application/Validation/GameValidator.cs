@@ -8,6 +8,7 @@ public class GameValidator : AbstractValidator<GameWriteModel>
     public GameValidator()
     {
         RuleFor(x => x.Name)
+            .NotEmpty()
             .Length(4, 128)
             .WithMessage(ValidationMessages.LengthMustBeInRange)
             .Must(Must.BeValidName)

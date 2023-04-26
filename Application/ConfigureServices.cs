@@ -18,7 +18,9 @@ public static class ConfigureServices
 
         services.AddValidatorsFromAssembly(assembly);
 
-        services.AddMediatR(assembly);
+        services.AddMediatR(options =>
+            options.RegisterServicesFromAssembly(assembly)
+        );
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
     }
 }

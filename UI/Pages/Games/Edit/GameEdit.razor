@@ -1,0 +1,120 @@
+﻿@page "/games/new"
+@page "/games/{gameId:int}/edit"
+
+@using Application.Models.ReadModels
+@using Application.Models.WriteModels
+@using System.Text
+@using Application.UseCases.Games.GetGame
+@using Application.UseCases.Games.UpdateGame
+@using AutoMapper
+@using FluentValidation
+@using System.Linq.Expressions
+@using Infrastructure.Services
+@using MediatR
+@using Application.UseCases.Games.CreateGame
+@using Application.UseCases.Developers.GetDevelopersPaged
+@using Application.UseCases.Categories.GetCategories
+
+@inject ISnackbar Snackbar
+@inject IHostEnvironment Environment
+@inject IValidator<GameWriteModel> Validator
+@inject IMediator Mediator
+@inject IMapper Mapper
+@inject IGameContentService ContentService
+@inject IPhysicalStorage PhysicalStorage
+@inject NavigationManager NavigationManager
+
+<GameForm 
+    @ref="_form"
+    Model="_model"
+    Categories="_categories"
+    SearchDevelopers="SearchDevelopersAsync"
+    OnSubmit="SubmitAsync" />
+
+@code {
+    [Parameter]
+    public int? GameId { get; set; }
+
+    private GameForm? _form;
+
+    private GameWriteModel _model = new();
+    private List<string> _images = new();
+    private IEnumerable<CategoryReadModel> _categories = Enumerable.Empty<CategoryReadModel>();
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (GameId is null)
+        {
+            _model = new();
+            _images = new();
+        }
+        else 
+        {
+            var game = await Mediator.Send(new GetGameQuery(x => x.Id == GameId));
+
+            if (game is null) 
+            {
+                NavigationManager.NavigateTo("games/new");
+            }
+
+            _model = Mapper.Map<GameWriteModel>(game);
+        }
+
+        _categories = await Mediator.Send(new GetCategoriesQuery());
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task<IEnumerable<string>> SearchDevelopersAsync(string value)
+    {
+        var query = new GetDevelopersPagedQuery(0, 10);
+
+        if (!string.IsNullOrEmpty(value))
+        {
+            query = query with
+                {
+                    ConfigureOptions = options => options.Where(x => x.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+                };
+        }
+
+        var developers = await Mediator.Send(query);
+        return developers.Select(x => x.Name);
+    }
+
+    private async Task SubmitAsync()
+    {
+        try
+        {
+            GameReadModel game;
+
+            if (GameId is null)
+            {
+                game = await Mediator.Send(new CreateGameCommand(_model));
+                Snackbar.Add("Game Added", MudBlazor.Severity.Success);
+            }
+            else 
+            {
+                game = await Mediator.Send(new UpdateGameCommand(GameId.Value, _model));
+            }
+
+            foreach (var image in _form.AddedImages) 
+            {
+                await ContentService.MoveToImagesAsync(game.Id, image);
+            }
+
+            foreach (var image in _form.DeletedImages) 
+            {
+                await PhysicalStorage.DeleteFileAsync(image);
+            }
+
+            NavigationManager.NavigateTo($"/games/{game.Id}/edit");
+        }
+        catch (ValidationException ex)
+        {
+            foreach (var error in ex.Errors)
+            {
+                Snackbar.Add(error.ErrorMessage, MudBlazor.Severity.Error);
+            }
+        }
+    }
+}

@@ -38,6 +38,30 @@ internal class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, Gam
             game.DeveloperId = developerId;
         }
 
+        game.Categories = request.Game.CategoryIds
+            .Select(x => _db.Categories.Find(x))
+            .Where(x => x is not null)
+            .ToList()!;
+
+        game.Images = new List<Image>();
+
+        foreach (var imagePath in request.Game.Images) 
+        {
+            var image = await _db.Images.FirstOrDefaultAsync(x => x.File.Path == imagePath);
+
+            if (image is null) 
+            {
+                var fileId = await _db.Files
+                    .Where(x => x.Path == imagePath)
+                    .Select(x => x.Id)
+                    .FirstOrDefaultAsync();
+
+                image = new Image { FileId = fileId };
+            }
+            
+            game.Images.Add(image);
+        }
+
         await _db.Games.AddAsync(game);
         await _db.SaveChangesAsync();
 

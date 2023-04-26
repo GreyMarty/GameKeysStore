@@ -9,7 +9,8 @@ public class SystemRequirementsMappingProfile : Profile
 {
     public SystemRequirementsMappingProfile()
     {
-        CreateMap<SystemRequirements, SytemRequirementsReadModel>();
-        CreateMap<SytemRequirementsWriteModel, SystemRequirements>();
+        CreateMap<SystemRequirements, SystemRequirementsReadModel>();
+        CreateMap<SystemRequirementsReadModel, SystemRequirementsWriteModel>();
+        CreateMap<SystemRequirementsWriteModel, SystemRequirements>();
     }
 }

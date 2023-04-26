@@ -10,6 +10,7 @@ public class KeyMappingProfile : Profile
     public KeyMappingProfile()
     {
         CreateMap<Key, KeyReadModel>();
+        CreateMap<KeyReadModel, KeyWriteModel>();
         CreateMap<KeyWriteModel, Key>();
     }
 }

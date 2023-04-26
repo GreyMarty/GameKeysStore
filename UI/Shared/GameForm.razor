@@ -1,0 +1,265 @@
+﻿@using Application.Models.ReadModels
+@using Application.Models.WriteModels
+@using System.Text
+@using FluentValidation
+@using System.Linq.Expressions
+@using Infrastructure.Services
+@using MediatR
+@using Application.UseCases.Games.CreateGame
+@using Application.UseCases.Developers.GetDevelopersPaged
+@using Application.UseCases.Categories.GetCategories
+
+@inject ISnackbar Snackbar
+@inject IHostEnvironment Environment
+@inject IPhysicalStorage PhysicalStorage
+@inject IGameContentService ContentService
+@inject IValidator<GameWriteModel> Validator
+@inject IMediator Mediator
+@inject NavigationManager NavigationManager
+
+<MudGrid Justify="Justify.Center">
+    <MudPaper Elevation="16" Class="pa-8" Style="width: 75%">
+        <div class="d-flex justify-space-between align-center">
+            <MudText Typo="Typo.h5">Game</MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Tertiary" OnClick="SubmitAsync">Save</MudButton>
+        </div>
+        <MudForm @ref="_form"  Model="Model" Validation="Validate" ValidationDelay="0" Class="mt-8">
+            <MudPaper 
+                Outlined="true"
+                Class="d-flex justify-center align-center"
+                Style="position:relative"
+                @onmouseover="@(() => _showImageOverray = true)"
+                @onmouseleave="@(() => _showImageOverray = false)" >
+
+                <MudCarousel
+                    @ref="_carousel"
+                    TData="object"
+                    Class="mud-width-full"
+                    Style="height:480px"
+                    ShowArrows="true"
+                    ShowBullets="true"
+                    EnableSwipeGesture="true"
+                    AutoCycle="false">
+                    <MudCarouselItem @ref="_carouselUpload">
+                        <MudFileUpload T="IBrowserFile" FilesChanged="UploadImageAsync">
+                            <ButtonTemplate>
+                                <div class="d-flex" style="height:480px">
+                                    <MudButton 
+                                        HtmlTag="label" 
+                                        EndIcon="@Icons.Material.Filled.Photo" 
+                                        Size="Size.Large"
+                                        Class="mx-auto my-auto"
+                                        for="@context">
+                                        Upload Image
+                                    </MudButton>
+                                </div>
+                            </ButtonTemplate>
+                        </MudFileUpload>
+                    </MudCarouselItem>
+                    @foreach (var image in AllImages)
+                    {
+                        <MudCarouselItem>
+                            <MudImage 
+                                Height="480"
+                                Src="@image"
+                                ObjectFit="ObjectFit.Cover"
+                                Class="rounded"
+                                Style="width:100%"/>
+
+                            <MudOverlay 
+                                Visible="_showImageOverray"
+                                DarkBackground="true"
+                                Absolute="true" >
+                                    <MudIconButton 
+                                        Icon="@Icons.Material.Filled.Delete"
+                                        Size="Size.Large"
+                                        OnClick="@(() => RemoveImageAsync(image))"/>
+                            </MudOverlay>
+                        </MudCarouselItem>
+                    }
+                </MudCarousel>
+            </MudPaper>
+            
+            <MudTextField 
+                @bind-Value="Model.Name"
+                For="@(() => Model.Name)"
+                Label="Title"
+                Immediate="true"/>
+
+            <MudAutocomplete
+                @bind-Value="Model.Developer.Name"
+                For="@(() => Model.Developer.Name)"
+                Label="Developer"
+                SearchFunc="SearchDevelopers"
+                ResetValueOnEmptyText="true"
+                CoerceValue="true"/>
+
+            <MudSelect
+                @bind-SelectedValues="Model.CategoryIds"
+                Label="Tags"
+                MultiSelection="true"
+                MultiSelectionTextFunc="@(new Func<List<string>, string>(GetSelectedCategoriesText))">
+                @foreach (var category in Categories)
+                {
+                    <MudSelectItem Value="category.Id">@category.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudText Typo="Typo.h5" Class="mt-8">System Requirements</MudText>
+            <MudTextField 
+                @bind-Value="Model.RecommendedSystemRequirements.OperatingSystem"
+                For="@(() => Model.RecommendedSystemRequirements.OperatingSystem)"
+                Label="OS"
+                Immediate="true"/>
+
+            <MudTextField 
+                @bind-Value="Model.RecommendedSystemRequirements.Processor"
+                For="@(() => Model.RecommendedSystemRequirements.Processor)"
+                Label="Processor"
+                Immediate="true"/>
+
+            <MudTextField 
+                @bind-Value="Model.RecommendedSystemRequirements.Graphics"
+                For="@(() => Model.RecommendedSystemRequirements.Graphics)"
+                Label="Graphics"
+                Immediate="true"/>
+
+            <MudTextField 
+                @bind-Value="Model.RecommendedSystemRequirements.Memory"
+                For="@(() => Model.RecommendedSystemRequirements.Memory)"
+                Label="Memory"
+                Immediate="true"/>
+
+            <MudTextField 
+                @bind-Value="Model.RecommendedSystemRequirements.Storage"
+                For="@(() => Model.RecommendedSystemRequirements.Storage)"
+                Label="Storage"
+                Immediate="true"/>
+
+            <MudText Typo="Typo.h5" Class="mt-8">Description</MudText>
+            <MudTextField 
+                @bind-Value="Model.Description"
+                For="@(() => Model.Description)"
+                Lines="256"
+                Variant="Variant.Filled"/>
+        </MudForm>
+    </MudPaper>
+</MudGrid>
+
+@code {
+    private MudForm? _form;
+    private MudCarousel<object>? _carousel;
+    private MudCarouselItem? _carouselUpload;
+
+    private bool _showImageOverray = false;
+
+    private List<string> _addedImages = new();
+    private List<string> _deletedImages = new();
+
+    [Parameter]
+    public GameWriteModel Model { get; set; } = new();
+
+    [Parameter]
+    public IEnumerable<CategoryReadModel> Categories { get; set; } = Enumerable.Empty<CategoryReadModel>();
+
+    [Parameter]
+    public Func<string, Task<IEnumerable<string>>> SearchDevelopers { get; set; }
+
+    [Parameter]
+    public EventCallback OnSubmit { get; set; }
+
+    public IEnumerable<string> AddedImages => _addedImages;
+    public IEnumerable<string> DeletedImages => _deletedImages;
+
+    private IEnumerable<string> AllImages => Model.Images.Union(_addedImages);
+
+    private Func<object, string, IEnumerable<string>> Validate => (model, propertyName) =>
+    {
+        var result = Validator.Validate(ValidationContext<GameWriteModel>.CreateWithOptions((GameWriteModel)model, x => x.IncludeProperties(propertyName)));
+        if (result.IsValid)
+        {
+            return Array.Empty<string>();
+        }
+
+        return result.Errors.Select(e => e.ErrorMessage);
+    };
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) 
+        {
+            _carousel.Items.Remove(_carouselUpload);
+            _carousel.AddItem(_carouselUpload);
+        }
+
+        base.OnAfterRender(firstRender);
+    }
+
+    private async Task UploadImageAsync(IBrowserFile file)
+    {
+        if (!file.ContentType.StartsWith("image"))
+        {
+            Snackbar.Add("Valid image file required", MudBlazor.Severity.Error);
+            return;
+        }
+
+        var path = await PhysicalStorage.CreateRandomTempFileAsync(Path.GetExtension(file.Name));
+        var physicalFileStream = File.OpenWrite(PhysicalStorage.GetContentPath(path));
+
+        var browserFileStream = file.OpenReadStream();
+        await browserFileStream.CopyToAsync(physicalFileStream);
+
+        browserFileStream.Close();
+        physicalFileStream.Close();
+
+        _addedImages.Add(path);
+
+        _carousel.Items.Remove(_carouselUpload);
+        StateHasChanged();
+        _carousel.AddItem(_carouselUpload);
+        _carousel.MoveTo(_carousel.Items.Count - 2);
+    }
+
+    private async Task RemoveImageAsync(string path)
+    {
+        if (Model.Images.Remove(path))
+        {
+            _deletedImages.Add(path);
+        }
+        else if (_addedImages.Remove(path))
+        {
+            await PhysicalStorage.DeleteFileAsync(path);
+        }
+
+        var selectedIndex = _carousel.SelectedIndex;
+        StateHasChanged();
+        _carousel.MoveTo(selectedIndex);
+    }
+
+    private string GetSelectedCategoriesText(List<string> selectedValues) =>
+        string.Join(
+            ", ", selectedValues.Select(i => Categories.FirstOrDefault(x => x.Id == int.Parse(i))?.Name)
+        );
+
+    private async Task SubmitAsync() 
+    {
+        await _form!.Validate();
+
+        if (_form.Errors.Any())
+        {
+            return;
+        }
+
+        foreach (var image in _addedImages) 
+        {
+            Model.Images.Add(image);
+        }
+
+        await OnSubmit.InvokeAsync();
+    }
+}

@@ -4,13 +4,13 @@ namespace Application.Validation;
 
 internal static class Must
 {
-    public static bool BeValidName(string name)
+    public static bool BeValidName(string? name)
     {
-        return Regex.IsMatch(name, RegexPatterns.ValidName);
+        return Regex.IsMatch(name ?? String.Empty, RegexPatterns.ValidName);
     }
 
-    public static bool BeValidSystemRequirementName(string requirementName)
+    public static bool BeValidSystemRequirementName(string? requirementName)
     {
-        return Regex.IsMatch(requirementName, RegexPatterns.ValidSystemRequirementName);
+        return Regex.IsMatch(requirementName ?? String.Empty, RegexPatterns.ValidSystemRequirementName);
     }
 }

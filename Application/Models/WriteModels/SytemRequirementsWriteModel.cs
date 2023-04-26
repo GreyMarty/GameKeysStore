@@ -1,6 +1,6 @@
 ﻿namespace Application.Models.WriteModels;
 
-public class SytemRequirementsWriteModel
+public class SystemRequirementsWriteModel
 {
     public string OperatingSystem { get; set; } = default!;
     public string Processor { get; set; } = default!;
