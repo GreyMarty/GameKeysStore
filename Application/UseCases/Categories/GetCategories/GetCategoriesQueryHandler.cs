@@ -21,11 +21,13 @@ internal class GetCategoriesQueryHandler : IRequestHandler<GetCategoriesQuery, I
     public async Task<IEnumerable<CategoryReadModel>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
     {
         var options = new IncludableQueryOptions<Category>();
-        options.OrderByAsc(x => x.Name);
-        options.AsNoTracking();
         request.ConfigureOptions?.Invoke(options);
 
-        var categories = await options.Apply(_db.Categories)
+        var dbCategories = _db.Categories
+            .OrderBy(x => x.Name)
+            .AsNoTracking();
+
+        var categories = await options.Apply(dbCategories)
             .ToArrayAsync();
 
         return _mapper.Map<IEnumerable<CategoryReadModel>>(categories);

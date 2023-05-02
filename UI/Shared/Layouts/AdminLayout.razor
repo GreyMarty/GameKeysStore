@@ -1,0 +1,59 @@
+﻿@using UI.Authentication
+@inherits LayoutComponentBase
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<AuthorizeView Roles="admin">
+    <Authorized>
+        <MudLayout>
+            <MudAppBar Elevation="2">
+                <MudSpacer />
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" EndIcon="@Icons.Material.Filled.Logout" OnClick="SignOutAsync">Sign Out</MudButton>
+            </MudAppBar>
+            <MudDrawer Open="true" Elevation="4">
+                <MudDrawerHeader>
+                    <MudText Typo="Typo.h6">Blazing Key</MudText>
+                </MudDrawerHeader>
+                <MudNavMenu>
+                    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.People">Users</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.VideogameAsset">Games</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Key">Keys</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Category">Categories</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Code">Developers</MudNavLink>
+                    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.FileUpload">Files</MudNavLink>
+                </MudNavMenu>
+            </MudDrawer>
+            <MudMainContent Class="overflow-hidden" Style="height:100%">
+                @Body
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+    <NotAuthorized>
+        @{
+            NavigationManager.NavigateTo("/"); 
+        }
+    </NotAuthorized>
+</AuthorizeView>
+
+
+<MudThemeProvider IsDarkMode="true"/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+@code {
+    private CustomAuthenticationStateProvider? _authenticationStateProvider;
+
+    bool _navBarOpen = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _authenticationStateProvider = (CustomAuthenticationStateProvider)AuthenticationStateProvider;
+    }
+
+    private async Task SignOutAsync()
+    {
+        await _authenticationStateProvider!.LogOutAsync();
+        NavigationManager.NavigateTo("/");
+    }
+}

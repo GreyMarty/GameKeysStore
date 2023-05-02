@@ -14,7 +14,7 @@ public static class ConfigureServices
 
         services.AddMarkedServices(assembly);
 
-        services.AddAutoMapper(options => { options.AddMaps(assembly); });
+        services.AddAutoMapper(assembly);
 
         services.AddValidatorsFromAssembly(assembly);
 

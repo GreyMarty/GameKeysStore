@@ -15,7 +15,6 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
     private readonly ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 
-    //private readonly ProtectedSessionStorage _sessionStorage;
     private readonly ProtectedLocalStorage _storage;
     private readonly IIdentityService _identityService;
     private readonly IPasswordHelper _passwordHelper;

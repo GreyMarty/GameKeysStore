@@ -3,10 +3,11 @@ using Application.Models.ReadModels;
 using AutoMapper;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.UseCases.Developers.GetDevelopersPaged;
 
-internal class GetDevelopersPagedQueryHandler : IRequestHandler<GetDevelopersPagedQuery, IEnumerable<DeveloperReadModel>>
+internal class GetDevelopersPagedQueryHandler : IRequestHandler<GetDevelopersPagedQuery, IPagedList<DeveloperReadModel>>
 {
     private readonly IApplicationDbContext _db;
     private readonly IMapper _mapper;
@@ -17,16 +18,18 @@ internal class GetDevelopersPagedQueryHandler : IRequestHandler<GetDevelopersPag
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<DeveloperReadModel>> Handle(GetDevelopersPagedQuery request, CancellationToken cancellationToken)
+    public async Task<IPagedList<DeveloperReadModel>> Handle(GetDevelopersPagedQuery request, CancellationToken cancellationToken)
     {
         var options = new IncludableQueryOptions<Developer>();
-        options.OrderByAsc(x => x.Name);
-        options.AsNoTracking();
         request.ConfigureOptions?.Invoke(options);
 
-        var developers = await options.Apply(_db.Developers)
+        var dbDevelopers = _db.Developers
+            .OrderBy(x => x.Name)
+            .AsNoTracking();
+
+        var developers = await options.Apply(dbDevelopers)
             .ToPagedListAsync(request.PageIndex, request.PageSize);
 
-        return _mapper.Map<IEnumerable<DeveloperReadModel>>(developers);
+        return _mapper.Map<IPagedList<DeveloperReadModel>>(developers);
     }
 }

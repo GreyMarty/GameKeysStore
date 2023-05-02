@@ -3,6 +3,8 @@ using Application.Models.ReadModels;
 using AutoMapper;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace Application.UseCases.GetGamesPaged;
 
@@ -20,16 +22,19 @@ internal class GetGamesPagedQueryHandler : IRequestHandler<GetGamesPagedQuery, I
     public async Task<IPagedList<GameReadModel>> Handle(GetGamesPagedQuery request, CancellationToken cancellationToken)
     {
         var options = new IncludableQueryOptions<Game>();
-        options.Include(x => x.Developer);
-        options.Include(x => x.RecommendedSystemRequirements);
-        options.Include(x => x.Images);
-        options.Include(x => x.Categories);
-        options.OrderByAsc(x => x.Name);
-        options.AsNoTracking();
         request.ConfigureOptions?.Invoke(options);
 
-        var games = await options.Apply(_db.Games)
-            .ToPagedListAsync(request.PageIndex, request.PageSize);
+        var dbGames = _db.Games
+            .Include(x => x.Developer)
+            .Include(x => x.RecommendedSystemRequirements)
+            .Include(x => x.Categories)
+            .Include(x => x.Images)
+            .ThenInclude(x => x.File)
+            .OrderBy(x => x.Name)
+            .AsNoTracking();
+
+        var games = await options.Apply(dbGames)
+        .ToPagedListAsync(request.PageIndex, request.PageSize);
 
         return _mapper.Map<IPagedList<GameReadModel>>(games);
     }

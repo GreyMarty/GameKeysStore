@@ -3,6 +3,7 @@ using Application.Models.ReadModels;
 using AutoMapper;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.UseCases.Keys.GetKeysPaged;
 
@@ -20,12 +21,14 @@ internal class GetKeysPagedQueryHandler : IRequestHandler<GetKeysPagedQuery, IPa
     public async Task<IPagedList<KeyReadModel>> Handle(GetKeysPagedQuery request, CancellationToken cancellationToken)
     {
         var options = new IncludableQueryOptions<Key>();
-        options.Include(x => x.Platform);
-        options.OrderByAsc(x => x.Game.Name);
-        options.AsNoTracking();
         request.ConfigureOptions?.Invoke(options);
 
-        var keys = await options.Apply(_db.Keys)
+        var dbKeys = _db.Keys
+            .Include(x => x.Platform)
+            .OrderBy(x => x.Game.Name)
+            .AsNoTracking();
+
+        var keys = await options.Apply(dbKeys)
             .ToPagedListAsync(request.PageIndex, request.PageSize);
 
         return _mapper.Map<IPagedList<KeyReadModel>>(keys);

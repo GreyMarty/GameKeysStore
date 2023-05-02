@@ -1,4 +1,5 @@
-﻿using Application.Models.ReadModels;
+﻿using Application.Data;
+using Application.Models.ReadModels;
 using Application.Models.WriteModels;
 using AutoMapper;
 using Domain.Entities;

@@ -5,4 +5,4 @@ using MediatR;
 
 namespace Application.UseCases.Developers.GetDevelopersPaged;
 
-public record GetDevelopersPagedQuery(int PageIndex, int PageSize, Action<IQueryOptions<Developer>>? ConfigureOptions = null) : IRequest<IEnumerable<DeveloperReadModel>>;
+public record GetDevelopersPagedQuery(int PageIndex, int PageSize, Action<IQueryOptions<Developer>>? ConfigureOptions = null) : IRequest<IPagedList<DeveloperReadModel>>;

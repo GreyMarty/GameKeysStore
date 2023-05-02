@@ -20,6 +20,6 @@ internal class PagedListConverter<TSource, TDestination>
         IPagedList<TDestination> destination,
         ResolutionContext context)
     {
-        return new PagedList<TDestination>(context.Mapper.Map<TDestination[]>(source.ToArray()), source.PageIndex, source.PageSize);
+        return new PagedList<TDestination>(context.Mapper.Map<TDestination[]>(source.ToArray()), source.PageIndex, source.PageSize, source.TotalCount);
     }
 }

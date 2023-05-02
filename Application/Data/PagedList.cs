@@ -7,19 +7,21 @@ public class PagedList<T> : IPagedList<T>
 {
     private readonly IReadOnlyList<T> _values;
 
-    public PagedList(T[] data, int pageIndex, int pageSize)
-    {
-        PageIndex = pageIndex;
-        PageSize = pageSize;
-
-        _values = data;
-    }
-
     public int Count => _values.Count;
     public int PageIndex { get; }
     public int PageSize { get; }
+    public int TotalCount { get; }
 
     public T this[int index] => _values[index];
+
+    public PagedList(T[] data, int pageIndex, int pageSize, int totalCount)
+    {
+        PageIndex = pageIndex;
+        PageSize = pageSize;
+        TotalCount = totalCount;
+
+        _values = data;
+    }
 
     public IEnumerator<T> GetEnumerator()
     {
@@ -41,7 +43,9 @@ public static class PageableCollectionExtensions
             .Take(pageSize)
             .ToArray();
 
-        return new PagedList<T>(data, pageIndex, pageSize);
+        var totalCount = source.Count();
+
+        return new PagedList<T>(data, pageIndex, pageSize, totalCount);
     }
 
     public static async Task<IPagedList<T>> ToPagedListAsync<T>(this IQueryable<T> source, int pageIndex, int pageSize)
@@ -51,6 +55,8 @@ public static class PageableCollectionExtensions
             .Take(pageSize)
             .ToArrayAsync();
 
-        return new PagedList<T>(data, pageIndex, pageSize);
+        var totalCount = await source.CountAsync();
+
+        return new PagedList<T>(data, pageIndex, pageSize, totalCount);
     }
 }
