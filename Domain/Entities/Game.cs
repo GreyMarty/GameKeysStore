@@ -14,6 +14,8 @@ public class Game : EntityBase
     public int RecommendedSystemRequirementsId { get; set; }
     public SystemRequirements RecommendedSystemRequirements { get; set; }
 
+    public bool Deleted { get; set; } = false;
+
     public virtual ICollection<Key> Keys { get; set; }
 
     public virtual ICollection<Category> Categories { get; set; }

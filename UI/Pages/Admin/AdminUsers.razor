@@ -1,0 +1,187 @@
+﻿@page "/admin/users"
+@layout AdminLayout
+
+@using Application.Models.ReadModels
+@using Application.UseCases.Games.DeleteGame
+@using Application.UseCases.Games.RestoreGame
+@using Application.UseCases.GetGamesPaged
+@using Application.UseCases.Users.GetUsersPaged
+@using Infrastructure.Security
+@using Infrastructure.Security.Services
+@using MediatR
+@using UI.Shared.Layouts
+
+@inject NavigationManager NavigationManager
+@inject IMediator Mediator
+@inject IIdentityService IdentityService
+
+<MudTable 
+    @ref="_table"
+    ServerData="LoadData"
+    FixedHeader="true"
+    FixedFooter="true"
+    ReadOnly="false"
+    CanCancelEdit="false"
+    EditTrigger="TableEditTrigger.EditButton"
+    RowEditPreview="BackupUser"
+    RowEditCancel="RevertChanges"
+    RowEditCommit="EditUser"
+    Height="80.5vh">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Users</MudText>
+        <MudSpacer/>
+        <div class="d-flex justify-end" style="width:25%">
+            <MudTextField 
+                @bind-Value="_searchString"
+                Placeholder="Search"
+                Adornment="Adornment.End"
+                AdornmentIcon="@Icons.Material.Filled.Search"
+                OnAdornmentClick="ApplyFilter"
+                Style=""/>
+        </div>
+    </ToolBarContent>
+    <ColGroup>
+        <col />
+        <col />
+        <col style="width: 200px"/>
+        <col style="width: 250px"/>
+    </ColGroup>
+    <HeaderContent>
+        <MudTh>
+            <div class="d-flex justify-start">UserName</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-start">E-Mail</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-start">Role</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-start">Registered</div>
+        </MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="UserName">
+            <div class="d-flex justify-start">@context.UserName</div>
+        </MudTd>
+        <MudTd DataLabel="Email">
+            <div class="d-flex justify-start">@context.Email</div>
+        </MudTd>
+        <MudTd DataLabel="Role">
+            <div class="d-flex justify-start">@(((Role)context.RoleFlags).ToString())</div>
+        </MudTd>
+        <MudTd DataLabel="RegisteredOn">
+            <div class="d-flex justify-start">@context.RegisteredOn.ToLongDateString()</div>
+        </MudTd>
+    </RowTemplate>
+    <RowEditingTemplate>
+        <MudTd DataLabel="UserName">
+            <div class="d-flex justify-start">@context.UserName</div>
+        </MudTd>
+        <MudTd DataLabel="Email">
+            <div class="d-flex justify-start">@context.Email</div>
+        </MudTd>
+        <MudTd DataLabel="Role">
+            <div class="d-flex justify-start">
+                <MudSelect 
+                    @bind-Value="context.RoleFlags">
+                    @foreach (var value in Enum.GetValues<Role>())
+                    {
+                        <MudSelectItem Value="@((long)value)">@value.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="RegisteredOn">
+            <div class="d-flex justify-start">@context.RegisteredOn.ToLongDateString()</div>
+        </MudTd>
+    </RowEditingTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+@code {
+    private MudTable<UserReadModel>? _table;
+
+    private string? _searchString = null;
+    private string? _filter = null;
+
+    private UserReadModel? _userBeforeEdit = null;
+
+    private void ApplyFilter() 
+    {
+        _filter = _searchString;
+        _table?.ReloadServerData();
+    }
+
+    private async Task<TableData<UserReadModel>> LoadData(TableState tableState)
+    {
+        var query = new GetUsersPagedQuery(
+            tableState.Page,
+            tableState.PageSize,
+            options =>
+            {
+                if (!string.IsNullOrWhiteSpace(_filter))
+                {
+                    _filter = _filter.Trim();
+                    options.Where(
+                        x => x.UserName.ToLower().Contains(_filter) ||
+                        x.Email.ToLower().Contains(_filter));
+                }
+
+                if (string.IsNullOrEmpty(tableState.SortLabel))
+                {
+                    switch (tableState.SortDirection)
+                    {
+                        case SortDirection.Ascending:
+                            options.OrderByAsc(tableState.SortLabel);
+                            break;
+                        case SortDirection.Descending:
+                            options.OrderByDesc(tableState.SortLabel);
+                            break;
+                    }
+                }
+            }
+        );
+
+        var users = await Mediator.Send(query);
+
+        return new TableData<UserReadModel>() { Items = users, TotalItems = users.TotalCount };
+    }
+
+    private void BackupUser(object item) 
+    {
+        var user = (UserReadModel)item;
+        _userBeforeEdit = new UserReadModel()
+        {
+            UserName = user.UserName,
+            Email = user.Email,
+            RoleFlags = user.RoleFlags,
+            RegisteredOn = user.RegisteredOn
+        };
+    }
+
+    private void RevertChanges(object item) 
+    {
+        var user = (UserReadModel)item;
+        user.UserName = _userBeforeEdit.UserName;
+        user.Email = _userBeforeEdit.Email;
+        user.RoleFlags = _userBeforeEdit.RoleFlags;
+        user.RegisteredOn = _userBeforeEdit.RegisteredOn;
+    }
+
+    private async void EditUser(object item) 
+    {
+        var userModel = (UserReadModel)item;
+
+        var user = await IdentityService.FindUserByLoginAsync(userModel.UserName);
+        await IdentityService.SetUserRoleAsync(user, (Role)userModel.RoleFlags);
+    }
+}

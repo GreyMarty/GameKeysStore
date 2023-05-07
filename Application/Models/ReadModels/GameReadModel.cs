@@ -10,4 +10,5 @@ public class GameReadModel
     public SystemRequirementsReadModel RecommendedSystemRequirements { get; set; } = default!;
     public IEnumerable<CategoryReadModel> Categories { get; set; } = Enumerable.Empty<CategoryReadModel>();
     public IEnumerable<string> Images { get; set; } = Enumerable.Empty<string>();
+    public bool Deleted { get; set; }
 }

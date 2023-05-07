@@ -79,12 +79,9 @@ public class IdentityService : IIdentityService
         return user;  
     }
 
-    public async Task SetUserRoleAsync(User user, Role flags)
+    public async Task SetUserRoleAsync(User user, Role role)
     {
-        var userRoles = (Role)user.RoleFlags;
-        userRoles |= flags;
-
-        user.RoleFlags = (ulong)userRoles;
+        user.RoleFlags = (ulong)role;
         _db.Users.Update(user);
         await _db.SaveChangesAsync();
     }
@@ -95,13 +92,6 @@ public class IdentityService : IIdentityService
         userRoles &= ~flags;
 
         user.RoleFlags = (ulong)userRoles;
-        _db.Users.Update(user);
-        await _db.SaveChangesAsync();
-    }
-
-    public async Task SetUserRolesAsync(User user, Role flags)
-    {
-        user.RoleFlags = (ulong)flags;
         _db.Users.Update(user);
         await _db.SaveChangesAsync();
     }

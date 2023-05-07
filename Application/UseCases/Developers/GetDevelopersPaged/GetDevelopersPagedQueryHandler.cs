@@ -28,8 +28,9 @@ internal class GetDevelopersPagedQueryHandler : IRequestHandler<GetDevelopersPag
             .AsNoTracking();
 
         var developers = await options.Apply(dbDevelopers)
+            .Select(x => new DeveloperReadModel { Id = x.Id, Name = x.Name, GamesCount = x.Games.Count() })
             .ToPagedListAsync(request.PageIndex, request.PageSize);
 
-        return _mapper.Map<IPagedList<DeveloperReadModel>>(developers);
+        return developers;
     }
 }

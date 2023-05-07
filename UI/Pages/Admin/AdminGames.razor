@@ -2,6 +2,8 @@
 @layout AdminLayout
 
 @using Application.Models.ReadModels
+@using Application.UseCases.Games.DeleteGame
+@using Application.UseCases.Games.RestoreGame
 @using Application.UseCases.GetGamesPaged
 @using MediatR
 @using UI.Shared.Layouts
@@ -45,7 +47,11 @@
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Name">
-            <div class="d-flex justify-start">@context.Name</div>
+            <div class="d-flex justify-start">
+                <MudText Color="@(context.Deleted ? Color.Secondary : Color.Default)">
+                    @context.Name
+                </MudText>
+            </div>
         </MudTd>
         <MudTd DataLabel="Developer">
             <div class="d-flex justify-start">@context.Developer.Name</div>
@@ -58,8 +64,18 @@
                 <MudIconButton 
                     Icon="@Icons.Material.Filled.Edit" 
                     OnClick="@(() => Edit(context.Id))"/>
-                 <MudIconButton 
-                    Icon="@Icons.Material.Filled.Delete"/>
+                @if (context.Deleted) 
+                {
+                    <MudIconButton
+                        Icon="@Icons.Material.Filled.RotateLeft"
+                        OnClick="@(async () => await RestoreAsync(context.Id))"/>
+                } 
+                else
+                {
+                    <MudIconButton 
+                        Icon="@Icons.Material.Filled.Delete"
+                        OnClick="@(async () => await DeleteAsync(context.Id))"/>
+                }
             </div>
         </MudTd>
     </RowTemplate>
@@ -122,5 +138,17 @@
     private void Edit(int id) 
     {
         NavigationManager.NavigateTo($"/games/{id}/edit");
+    }
+
+    private async Task DeleteAsync(int id) 
+    {
+        await Mediator.Send(new DeleteGameCommand(id));
+        await _table.ReloadServerData();
+    }
+
+    private async Task RestoreAsync(int id) 
+    {
+        await Mediator.Send(new RestoreGameCommand(id));
+        await _table.ReloadServerData();
     }
 }
