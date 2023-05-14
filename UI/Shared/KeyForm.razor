@@ -1,0 +1,107 @@
+﻿@using Application.Models.ReadModels
+@using Application.Models.WriteModels
+@using System.Text
+@using FluentValidation
+@using System.Linq.Expressions
+@using Infrastructure.Services
+@using MediatR
+@using Application.UseCases.Games.CreateGame
+@using Application.UseCases.Developers.GetDevelopersPaged
+@using Application.UseCases.Categories.GetCategories
+
+@inject ISnackbar Snackbar
+@inject IHostEnvironment Environment
+@inject IPhysicalStorage PhysicalStorage
+@inject IGameContentService ContentService
+@inject IValidator<KeysWriteModel> Validator
+@inject IMediator Mediator
+@inject NavigationManager NavigationManager
+
+<MudGrid Justify="Justify.Center">
+    <MudPaper Elevation="16" Class="pa-8" Style="width: 75%">
+        <div class="d-flex justify-space-between align-center">
+            <MudText Typo="Typo.h5">Key</MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Tertiary" OnClick="SubmitAsync">Save</MudButton>
+        </div>
+        <MudForm @ref="_form"  Model="Model" Validation="Validate" ValidationDelay="0" Class="mt-8">
+            <MudAutocomplete
+                @bind-Value="Model.Platform.Name"
+                For="@(() => Model.Platform.Name)"
+                Label="Platform"
+                SearchFunc="SearchPlatforms"
+                ResetValueOnEmptyText="true"
+                CoerceValue="true"/>
+            
+            <MudAutocomplete
+                @bind-Value="Model.GameName"
+                For="@(() => Model.GameName)"
+                Label="Game"
+                SearchFunc="SearchGames"
+                ResetValueOnEmptyText="true"
+                CoerceText="true"
+                CoerceValue="false"/>
+
+            <MudNumericField
+                @bind-Value="Model.Price"
+                For="@(() => Model.Price)"
+                Label="Price"
+                Min="0"
+                Max="999999"
+                Step="0.1M"/>
+
+            <MudText Typo="Typo.h5" Class="mt-8">Keys</MudText>
+            <MudTextField 
+                @bind-Value="_keys"
+                Lines="256"
+                Variant="Variant.Filled"/>
+        </MudForm>
+    </MudPaper>
+</MudGrid>
+
+@code {
+    private MudForm? _form;
+
+    private string _keys = string.Empty;
+
+    [Parameter]
+    public KeysWriteModel Model { get; set; } = new();
+
+    [Parameter]
+    public Func<string, Task<IEnumerable<string>>> SearchPlatforms { get; set; }
+
+    [Parameter]
+    public Func<string, Task<IEnumerable<string>>> SearchGames { get; set; }
+
+    [Parameter]
+    public EventCallback OnSubmit { get; set; }
+
+    private Func<object, string, IEnumerable<string>> Validate => (model, propertyName) =>
+    {
+        var result = Validator.Validate(ValidationContext<KeysWriteModel>.CreateWithOptions((KeysWriteModel)model, x => x.IncludeProperties(propertyName)));
+        if (result.IsValid)
+        {
+            return Array.Empty<string>();
+        }
+
+        return result.Errors.Select(e => e.ErrorMessage);
+    };
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
+    private async Task SubmitAsync()
+    {
+        Model.KeyStrings = _keys.Split("\n");
+
+        await _form!.Validate();
+
+        if (_form.Errors.Any())
+        {
+            return;
+        }
+
+        await OnSubmit.InvokeAsync();
+    }
+}

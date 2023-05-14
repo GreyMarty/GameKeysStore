@@ -1,16 +1,231 @@
 ﻿@page "/games"
 @using Application.Models.ReadModels
+@using Application.UseCases.Categories.GetCategories
+@using Application.UseCases.Games.GetGamesSlice
+@using Application.UseCases.Keys.GetKeyGroupsSlice
+@using Application.UseCases.Platforms.GetPlatforms
+@using MediatR
 
-<div class="row row-cols-1 row-cols-md-5 g-4" data-bs-theme="dark">
-    @foreach(var game in _games)
-    {
-        <div class="col">
-            <Game Model="@game"/>
+@inject IMediator Mediator
+
+<div class="d-flex flex-grow-1 gap-4">
+    <!--Filters-->
+    <div style="width:20%">
+        <!--Platforms-->
+        <MudText
+            Typo="Typo.h5"
+            Style="font-weight:bold">
+            Platforms
+        </MudText>
+        <MudCheckBox
+            @bind-Checked="AllPlatformsChecked"
+            Label="All"/>
+        @foreach (var platform in _platformsCollapsed ? _platforms.Take(5) : _platforms)
+        {
+            <MudCheckBox
+                @bind-Checked="_checkedPlatforms[platform.Id]"
+                Label="@(platform.Name)"/>
+        }
+        <MudButton 
+            Variant="Variant.Text"
+            Size="Size.Small"
+            StartIcon="@(_platformsCollapsed ? Icons.Material.Filled.ArrowDropDown : Icons.Material.Filled.ArrowDropUp)"
+            OnClick="@(() => _platformsCollapsed = !_platformsCollapsed)">
+            @(_platformsCollapsed ? "Show All" : "Hide")
+        </MudButton>
+
+        <!--Price Range-->
+        <MudText
+            Typo="Typo.h5"
+            Class="mt-4"
+            Style="font-weight:bold">
+            PriceRange
+        </MudText>
+        <div class="d-flex justify-between flex-grow-1">
+            <MudTextField
+                @bind-Value="_priceFrom"
+                Label="From"/>
+                <MudText Typo="Typo.body1" Class="d-flex align-end mx-8">-</MudText>
+            <MudTextField
+                @bind-Value="_priceTo"
+                Label="To"/>
         </div>
-    }
+
+        <!--Categories-->
+        <MudText
+            Typo="Typo.h5"
+            Class="mt-4"
+            Style="font-weight:bold">
+            Categories
+        </MudText>
+        <MudCheckBox
+            @bind-Checked="AllCategoriesChecked"
+            Label="All"/>
+        @foreach (var category in _categoriesCollapsed ? _categories.Take(5) : _categories)
+        {
+                <MudCheckBox
+                @bind-Checked="_checkedCategories[category.Id]"
+                Label="@(category.Name)"/>
+        }
+        <MudButton 
+            Variant="Variant.Text"
+            Size="Size.Small"
+            StartIcon="@(_categoriesCollapsed ? Icons.Material.Filled.ArrowDropDown : Icons.Material.Filled.ArrowDropUp)"
+            OnClick="@(() => _categoriesCollapsed = !_categoriesCollapsed)">
+            @(_categoriesCollapsed ? "Show All" : "Hide")
+        </MudButton>
+
+        <div class="d-flex justify-center">
+            <MudButton
+                Variant="Variant.Outlined"
+                EndIcon="@Icons.Material.Filled.FilterAlt"
+                Class="mt-4"
+                OnClick="Reload">
+                Apply Filters
+            </MudButton>
+        </div>
+    </div>
+    
+    <!--Games-->
+    <MudPaper Class="flex-1 pa-8">
+        <!--Header-->
+        <div class="d-flex justify-between" style="height:50px">
+            <MudText
+                Typo="Typo.h5"
+                Class="mt-2">
+                <b>@_totalCount</b> results found
+            </MudText>
+
+            <MudSpacer />
+            
+            <div class="d-flex justify-end" style="width:40%">
+                <MudTextField 
+                    @bind-Value="_searchString"
+                    Placeholder="Search"
+                    Adornment="Adornment.End"
+                    AdornmentIcon="@Icons.Material.Filled.Search"
+                    OnAdornmentClick="Reload"/>
+            </div>
+        </div>
+        <!--Content-->
+        <div class="d-flex flex-column gap-4 mt-4">
+            <Virtualize @ref="_keysVirtualize" ItemsProvider="LoadGamesAsync">
+                <GameCard Model="context"/>
+            </Virtualize>
+        </div>
+    </MudPaper>
 </div>
 
 @code {
-    private readonly IEnumerable<GameReadModel> _games = Enumerable.Range(1, 10)
-        .Select(x => new GameReadModel { Name = $"Game{x}" });
+    private Virtualize<KeyGroupReadModel>? _keysVirtualize;
+
+    private int _totalCount;
+
+    private IEnumerable<PlatformReadModel> _platforms = Enumerable.Empty<PlatformReadModel>();
+    private IEnumerable<CategoryReadModel> _categories = Enumerable.Empty<CategoryReadModel>();
+
+    private Dictionary<int, bool> _checkedPlatforms = new();
+    private bool _platformsCollapsed = true;
+
+    private Dictionary<int, bool> _checkedCategories = new();
+    private bool _categoriesCollapsed = true;
+
+    private decimal? _priceFrom;
+    private decimal? _priceTo;
+
+    private string? _searchString;
+
+    private int _pageNumber = 1;
+    private int _pageSize = 10;
+    private int _pagesCount = 10;
+
+    private bool AllPlatformsChecked 
+    {
+        get => _checkedPlatforms.Values.All(x => x);
+        set => CheckAllPlatforms(value);
+    }
+
+    private bool AllCategoriesChecked 
+    {
+        get => _checkedCategories.Values.All(x => x);
+        set => CheckAllCategories(value);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _platforms = await Mediator.Send(new GetPlatformsQuery());
+        _categories = await Mediator.Send(new GetCategoriesQuery());
+
+        CheckAllPlatforms(true);
+        CheckAllCategories(true);
+
+        var keys = await Mediator.Send(new GetKeyGroupsSliceQuery(0, 10));
+
+        await base.OnInitializedAsync();
+    }
+
+    private void CheckAllPlatforms(bool value) 
+    {
+        _platforms.Aggregate(_checkedPlatforms, (acc, x) =>
+        {
+            acc[x.Id] = value;
+            return acc;
+        });
+    }
+
+    private void CheckAllCategories(bool value) 
+    {
+        _categories.Aggregate(_checkedCategories, (acc, x) =>
+       {
+           acc[x.Id] = value;
+           return acc;
+       });
+    }
+
+    private async ValueTask<ItemsProviderResult<KeyGroupReadModel>> LoadGamesAsync(ItemsProviderRequest request) 
+    {
+        var selectedPlatforms = _checkedPlatforms
+            .Where(x => x.Value)
+            .Select(x => x.Key)
+            .ToArray();
+
+        var selectedCategories = _checkedCategories
+            .Where(x => x.Value)
+            .Select(x => x.Key);
+
+        var query = new GetKeyGroupsSliceQuery(request.StartIndex, request.Count, options =>
+        {
+            options.Where(x => !x.Purchased);
+
+            options.Where(x => selectedPlatforms.Contains(x.PlatformId));
+            options.Where(x => x.Game.Categories.Any(x => selectedCategories.Contains(x.Id)));
+
+            if (_priceFrom is not null) 
+            {
+                options.Where(x => x.Price >= _priceFrom);
+            }
+
+            if (_priceTo is not null) 
+            {
+                options.Where(x => x.Price <= _priceTo);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_searchString)) 
+            {
+                options.Where(x => x.Game.Name.ToLower().Contains(_searchString.ToLower()));
+            }
+        });
+
+        var keyGroups = await Mediator.Send(query, request.CancellationToken);
+        _totalCount = keyGroups.TotalCount;
+        StateHasChanged();
+
+        return new ItemsProviderResult<KeyGroupReadModel>(keyGroups, keyGroups.TotalCount);
+    }
+
+    private async void Reload() 
+    {
+        await _keysVirtualize.RefreshDataAsync();
+        StateHasChanged();
+    }
 }

@@ -14,14 +14,16 @@
     <MudPaper Elevation="16" Class="pa-8" Style="width: 50%">
         <MudText Typo="Typo.h4" Class="mb-5">Welcome Back</MudText>
         <MudForm Model="@_model">
-                <MudTextField @bind-Value="_model.Login"
-							    Label="Username or E-Mail" />
+                <MudTextField 
+                    @bind-Value="_model.Login"
+					Label="Username or E-Mail" />
 
-                <MudTextField @bind-Value="_model.Password"
-							    For="@(() => _model.Password)"
-                                InputType="InputType.Password"
-							    Immediate="true"
-							    Label="Password" />
+                <MudTextField 
+                    @bind-Value="_model.Password"
+					For="@(() => _model.Password)"
+                    InputType="InputType.Password"
+					Immediate="true"
+					Label="Password" />
 
         </MudForm>
         <div class="mt-10 d-flex justify-content-around align-items-center">
@@ -52,7 +54,7 @@
         try
         {
             await _customAuthenticationStateProvider.LoginAsync(_model.Login, _model.Password);
-            NavigationManager.NavigateTo("/authoruization");
+            NavigationManager.NavigateTo("/");
         }
         catch (UserNotFoundException)
         {

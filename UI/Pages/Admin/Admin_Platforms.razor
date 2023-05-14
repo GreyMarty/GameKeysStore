@@ -1,0 +1,123 @@
+﻿@page "/admin/platforms"
+@layout AdminLayout
+
+@using Application.Models.ReadModels
+@using Application.UseCases.Platforms.DeletePlatform
+@using Application.UseCases.Platforms.GetPlatforms
+@using MediatR
+@using UI.Shared.Layouts
+
+@inject NavigationManager NavigationManager
+@inject IMediator Mediator
+
+<MudTable 
+    @ref="_table"
+    ServerData="LoadData"
+    FixedHeader="true"
+    FixedFooter="true"
+    ReadOnly="false"
+    CanCancelEdit="false"
+    EditTrigger="TableEditTrigger.EditButton"
+    Height="80.5vh">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Platforms</MudText>
+        <MudSpacer/>
+        <div class="d-flex justify-end" style="width:25%">
+            <MudTextField 
+                @bind-Value="_searchString"
+                Placeholder="Search"
+                Adornment="Adornment.End"
+                AdornmentIcon="@Icons.Material.Filled.Search"
+                OnAdornmentClick="ApplyFilter"
+                Style=""/>
+        </div>
+    </ToolBarContent>
+    <ColGroup>
+        <col />
+        <col style="width: 150px"/>
+        <col style="width: 100px"/>
+    </ColGroup>
+    <HeaderContent>
+        <MudTh>
+            <div class="d-flex justify-start">Name</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-start">Games</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-start">Actions</div>
+        </MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">
+            <div class="d-flex justify-start">@context.Name</div>
+        </MudTd>
+        <MudTd DataLabel="GamesCount">
+            <div class="d-flex justify-start">@context.GamesCount</div>
+        </MudTd>
+        <MudTd>
+            <div class="d-flex justify-center">
+                <MudIconButton
+                    Icon="@Icons.Material.Filled.Delete"
+                    OnClick="@(async () => await DeleteAsync(context.Id))"
+                    Disabled="@(context.GamesCount > 0)"/>
+            </div>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+</MudTable>
+
+@code {
+    private MudTable<PlatformReadModel>? _table;
+
+    private string? _searchString = null;
+    private string? _filter = null;
+
+    private void ApplyFilter()
+    {
+        _filter = _searchString;
+        _table?.ReloadServerData();
+    }
+
+    private async Task<TableData<PlatformReadModel>> LoadData(TableState tableState)
+    {
+        var query = new GetPlatformsQuery(
+            options =>
+            {
+                if (!string.IsNullOrWhiteSpace(_filter))
+                {
+                    _filter = _filter.Trim();
+                    options.Where(x => x.Name.ToLower().Contains(_filter));
+                }
+
+                if (string.IsNullOrEmpty(tableState.SortLabel))
+                {
+                    switch (tableState.SortDirection)
+                    {
+                        case SortDirection.Ascending:
+                            options.OrderByAsc(tableState.SortLabel);
+                            break;
+                        case SortDirection.Descending:
+                            options.OrderByDesc(tableState.SortLabel);
+                            break;
+                    }
+                }
+            }
+        );
+
+        var platforms = await Mediator.Send(query);
+
+        return new TableData<PlatformReadModel>() { Items = platforms, TotalItems = platforms.Count() };
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await Mediator.Send(new DeletePlatformCommand(id));
+        await _table.ReloadServerData();
+    }
+}

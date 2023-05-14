@@ -1,0 +1,55 @@
+﻿@page "/admin/keys/new"
+
+@using Application.Models.WriteModels
+@using Application.UseCases.GetGamesPaged
+@using Application.UseCases.Keys.CreateManyKeys
+@using Application.UseCases.Platforms.GetPlatforms
+@using MediatR
+
+@inject IMediator Mediator
+@inject NavigationManager NavigationManager
+
+<KeyForm
+    @ref="_form"
+    Model="_model"
+    SearchPlatforms="SearchPlatformsAsync"
+    SearchGames="SearchGamesAsync"
+    OnSubmit="OnSubmit"/>
+
+@code {
+    private KeyForm? _form;
+
+    private KeysWriteModel _model = new();
+
+    private async Task<IEnumerable<string>> SearchPlatformsAsync(string filter) 
+    {
+        var query = new GetPlatformsQuery(options =>
+        {
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                options.Where(x => x.Name.ToLower().Contains(filter.ToLower()));
+            }
+        });
+
+        return (await Mediator.Send(query)).Select(x => x.Name);
+    }
+
+    private async Task<IEnumerable<string>> SearchGamesAsync(string filter) 
+    {
+        var query = new GetGamesPagedQuery(0, 10, options =>
+        {
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                options.Where(x => x.Name.ToLower().Contains(filter.ToLower()));
+            }
+        });
+
+        return (await Mediator.Send(query)).Select(x => x.Name);
+    }
+
+    private async void OnSubmit() 
+    {
+        await Mediator.Send(new CreateManyKeysCommand(_model));
+        NavigationManager.NavigateTo("/admin/keys");
+    }
+}

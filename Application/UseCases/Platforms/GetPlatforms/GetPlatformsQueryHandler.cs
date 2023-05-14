@@ -10,12 +10,10 @@ namespace Application.UseCases.Platforms.GetPlatforms;
 internal class GetPlatformsQueryHandler : IRequestHandler<GetPlatformsQuery, IEnumerable<PlatformReadModel>>
 {
     private readonly IApplicationDbContext _db;
-    private readonly IMapper _mapper;
 
-    public GetPlatformsQueryHandler(IApplicationDbContext db, IMapper mapper)
+    public GetPlatformsQueryHandler(IApplicationDbContext db)
     {
         _db = db;
-        _mapper = mapper;
     }
 
     public async Task<IEnumerable<PlatformReadModel>> Handle(GetPlatformsQuery request, CancellationToken cancellationToken)
@@ -25,9 +23,14 @@ internal class GetPlatformsQueryHandler : IRequestHandler<GetPlatformsQuery, IEn
         options.OrderByAsc(x => x.Name);
         request.ConfigureOptions?.Invoke(options);
 
-        var platforms = await options.Apply(_db.Platforms)
+        var dbPlatforms = _db.Platforms
+            .OrderBy(x => x.Name)
+            .AsNoTracking();
+
+        var platforms = await options.Apply(dbPlatforms)
+            .Select(x => new PlatformReadModel() { Id = x.Id, Name = x.Name, GamesCount = x.Keys.GroupBy(x => x.GameId).Count() })
             .ToArrayAsync();
 
-        return _mapper.Map<IEnumerable<PlatformReadModel>>(platforms);
+        return platforms;
     }
 }

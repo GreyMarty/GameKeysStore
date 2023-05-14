@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.StaticFiles;
+using Application.UseCases.Keys.PurchaseKey;
+using Microsoft.AspNetCore.Components.Authorization;
+using System.Text;
+using MediatR;
 
 namespace UI.Controllers
 {
@@ -9,10 +13,12 @@ namespace UI.Controllers
     public class ContentController : ControllerBase
     {
         private readonly IPhysicalStorage _storage;
+        private readonly IMediator _mediator;
 
-        public ContentController(IPhysicalStorage storage)
+        public ContentController(IPhysicalStorage storage, IMediator mediator)
         {
             _storage = storage;
+            _mediator = mediator;
         }
 
         [HttpGet("/games/{gameId}/images/{fileName}")]
@@ -53,6 +59,17 @@ namespace UI.Controllers
             }
 
             return PhysicalFile(path, contentType);
+        }
+
+        [HttpPost("/games/{gameId}/purchase/{platformId}")]
+        public async Task<IActionResult> PurchaseAsyns(int gameId, int platformId)
+        {
+            var key = await _mediator.Send(new PurchaseKeyCommand(gameId, platformId));
+
+            var stream = new MemoryStream();
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(key.KeyString));
+
+            return File(stream, "text/plain", $"{key.GameName}_Key.txt");
         }
     }
 }

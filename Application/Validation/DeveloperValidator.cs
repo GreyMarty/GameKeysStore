@@ -8,6 +8,7 @@ public class DeveloperValidator : AbstractValidator<DeveloperWriteModel>
     public DeveloperValidator()
     {
         RuleFor(x => x.Name)
+            .NotNull()
             .NotEmpty()
             .Length(4, 128)
             .WithMessage(ValidationMessages.LengthMustBeInRange)

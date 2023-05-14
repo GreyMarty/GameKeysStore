@@ -1,4 +1,5 @@
-﻿@page "/admin/games"
+﻿@page "/admin"
+@page "/admin/games"
 @layout AdminLayout
 
 @using Application.Models.ReadModels
@@ -14,6 +15,11 @@
 <MudTable @ref="_table" ServerData="LoadData" FixedHeader="true" FixedFooter="true" Height="80.5vh">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Games</MudText>
+        <MudIconButton
+            Color="Color.Tertiary"
+            Icon="@Icons.Material.Filled.Add"
+            Size="Size.Medium"
+            Href="admin/games/new"/>
         <MudSpacer/>
         <div class="d-flex justify-end" style="width:25%">
             <MudTextField 
@@ -137,7 +143,7 @@
 
     private void Edit(int id) 
     {
-        NavigationManager.NavigateTo($"/games/{id}/edit");
+        NavigationManager.NavigateTo($"admin/games/{id}/edit");
     }
 
     private async Task DeleteAsync(int id) 

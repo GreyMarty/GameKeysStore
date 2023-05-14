@@ -1,0 +1,176 @@
+﻿@page "/admin/keys"
+@layout AdminLayout
+
+@using Application.Models.ReadModels
+@using Application.UseCases.Games.DeleteGame
+@using Application.UseCases.Games.RestoreGame
+@using Application.UseCases.GetGamesPaged
+@using Application.UseCases.Keys.DeleteKey
+@using Application.UseCases.Keys.GetKeysPaged
+@using MediatR
+@using UI.Shared.Layouts
+
+@inject IMediator Mediator
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<MudTable 
+    @ref="_table" 
+    ServerData="LoadData" 
+    FixedHeader="true" 
+    FixedFooter="true"
+    Height="80.5vh">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Keys</MudText>
+        <MudIconButton
+            Color="Color.Tertiary"
+            Icon="@Icons.Material.Filled.Add"
+            Size="Size.Medium"
+            Href="admin/keys/new"/>
+        <MudSpacer/>
+        <div class="d-flex justify-end" style="width:25%">
+            <MudTextField 
+                @bind-Value="_searchString"
+                Placeholder="Search"
+                Adornment="Adornment.End"
+                AdornmentIcon="@Icons.Material.Filled.Search"
+                OnAdornmentClick="ApplyFilter"
+                Style=""/>
+        </div>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width:30%"/>
+        <col />
+        <col />
+        <col style="width:150px" />
+        <col style="width:100px" />
+    </ColGroup>
+    <HeaderContent>
+        <MudTh>
+            <div class="d-flex justify-start">Key</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-start">Game</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-start">Platform</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-start">Price</div>
+        </MudTh>
+        <MudTh>
+            <div class="d-flex justify-center">Actions</div>
+        </MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Key">
+            <div class="d-flex justify-start">
+                <MudText>
+                    @context.KeyString
+                </MudText>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="Game">
+            <div class="d-flex justify-start">
+                <MudText>
+                    @context.GameName
+                </MudText>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="Platform">
+            <div class="d-flex justify-start">
+                <MudText>
+                    @context.Platform.Name
+                </MudText>
+            </div>
+        </MudTd>
+        <MudTd DataLabel="Price">
+            <div class="d-flex justify-start">
+                <MudText>
+                    @(context.Price)$
+                </MudText>
+            </div>
+        </MudTd>
+        <MudTd>
+            <div class="d-flex justify-center">
+                <MudIconButton 
+                    Icon="@Icons.Material.Filled.Delete"
+                    OnClick="@(async () => await DeleteAsync(context.Id))"/>
+            </div>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+
+@code {
+    private MudTable<KeyReadModel>? _table;
+    private TableGroupDefinition<KeyReadModel> _groupDefinition = new()
+    {
+        GroupName = "Game",
+        Indentation = false,
+        Expandable = true,
+        IsInitiallyExpanded = false,
+        Selector = x => x.GameName
+    };
+
+    private string? _searchString = null;
+    private string? _filter = null;
+
+    private void ApplyFilter()
+    {
+        _filter = _searchString;
+        _table?.ReloadServerData();
+    }
+
+    private async Task<TableData<KeyReadModel>> LoadData(TableState tableState)
+    {
+        var query = new GetKeysPagedQuery(
+            tableState.Page,
+            tableState.PageSize,
+            options =>
+            {
+                options.Where(x => !x.Purchased);
+
+                if (!string.IsNullOrWhiteSpace(_filter))
+                {
+                    _filter = _filter.Trim();
+                    options.Where(x => x.Game.Name.ToLower().Contains(_filter) || x.KeyString.ToLower().Contains(_filter));
+                }
+
+                if (string.IsNullOrEmpty(tableState.SortLabel))
+                {
+                    switch (tableState.SortDirection)
+                    {
+                        case SortDirection.Ascending:
+                            options.OrderByAsc(tableState.SortLabel);
+                            break;
+                        case SortDirection.Descending:
+                            options.OrderByDesc(tableState.SortLabel);
+                            break;
+                    }
+                }
+            }
+        );
+
+        var games = await Mediator.Send(query);
+
+        return new TableData<KeyReadModel>() { Items = games, TotalItems = games.TotalCount };
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await Mediator.Send(new DeleteKeyCommand(id));
+        await _table.ReloadServerData();
+
+        Snackbar.Add("Key deleted successfully!", Severity.Success);
+    }
+}

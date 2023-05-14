@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
-builder.Services.AddDbContext<IApplicationDbContext, ApplicationDbContext>(options =>
+builder.Services.AddDbContextPool<IApplicationDbContext, ApplicationDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("Testing"));
 });

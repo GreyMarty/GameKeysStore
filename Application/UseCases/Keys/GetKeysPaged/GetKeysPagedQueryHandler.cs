@@ -25,6 +25,7 @@ internal class GetKeysPagedQueryHandler : IRequestHandler<GetKeysPagedQuery, IPa
 
         var dbKeys = _db.Keys
             .Include(x => x.Platform)
+            .Include(x => x.Game)
             .OrderBy(x => x.Game.Name)
             .AsNoTracking();
 

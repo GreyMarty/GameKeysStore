@@ -1,15 +1,16 @@
 ﻿using Application.Models.WriteModels;
+using Application.Validation;
 using FluentValidation;
 
 namespace Application.Validation;
 
-public class KeyValidator : AbstractValidator<KeyWriteModel>
+public class KeysValidator : AbstractValidator<KeysWriteModel>
 {
-    public KeyValidator()
+    public KeysValidator()
     {
-        RuleFor(x => x.KeyString)
-            .NotEmpty()
-            .WithMessage(ValidationMessages.MustNotBeEmpty);
+        RuleFor(x => x.KeyStrings)
+            .NotNull()
+            .NotEmpty();
 
         RuleFor(x => x.Price)
             .GreaterThanOrEqualTo(0)
@@ -19,6 +20,7 @@ public class KeyValidator : AbstractValidator<KeyWriteModel>
             .SetValidator(new PlatformValidator());
 
         RuleFor(x => x.GameName)
+            .NotNull()
             .NotEmpty()
             .Length(4, 128)
             .WithMessage(ValidationMessages.LengthMustBeInRange)

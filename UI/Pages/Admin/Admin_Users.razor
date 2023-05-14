@@ -15,6 +15,12 @@
 @inject IMediator Mediator
 @inject IIdentityService IdentityService
 
+<AuthorizeView Roles="admin">
+    <NotAuthorized>
+        @{ NavigationManager.NavigateTo("/admin/games"); }
+    </NotAuthorized>
+</AuthorizeView>
+
 <MudTable 
     @ref="_table"
     ServerData="LoadData"
@@ -85,10 +91,10 @@
             <div class="d-flex justify-start">
                 <MudSelect 
                     @bind-Value="context.RoleFlags">
-                    @foreach (var value in Enum.GetValues<Role>())
-                    {
-                        <MudSelectItem Value="@((long)value)">@value.ToString()</MudSelectItem>
-                    }
+            @foreach (var value in Enum.GetValues<Role>())
+            {
+                            <MudSelectItem Value="@((long)value)">@value.ToString()</MudSelectItem>
+            }
                 </MudSelect>
             </div>
         </MudTd>

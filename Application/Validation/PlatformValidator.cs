@@ -8,6 +8,7 @@ public class PlatformValidator : AbstractValidator<PlatformWriteModel>
     public PlatformValidator()
     {
         RuleFor(x => x.Name)
+            .NotNull()
             .NotEmpty()
             .Length(3, 128)
             .WithMessage(ValidationMessages.LengthMustBeInRange)

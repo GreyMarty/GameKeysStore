@@ -34,7 +34,7 @@ public class PagedList<T> : IPagedList<T>
     }
 }
 
-public static class PageableCollectionExtensions
+public static class PagedListExtensions
 {
     public static IPagedList<T> ToPagedList<T>(this IEnumerable<T> source, int pageIndex, int pageSize) 
     {

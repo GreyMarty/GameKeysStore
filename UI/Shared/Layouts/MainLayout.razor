@@ -8,7 +8,6 @@
     <MudAppBar Elevation="2">
         <MudText Typo="Typo.h4" Class="px-4">Blazing Key</MudText>
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart" Edge="Edge.End" Class="me-2"/>
         <AuthorizeView>
             <Authorized>
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary" EndIcon="@Icons.Material.Filled.Logout" OnClick="SignOutAsync">Sign Out</MudButton>
@@ -18,11 +17,18 @@
             </NotAuthorized>
         </AuthorizeView>
     </MudAppBar>
-    <MudMainContent Class="pt-16 px-16">
-        <MudContainer Class="my-16">
-            @Body
-        </MudContainer>
-    </MudMainContent>
+    <AuthorizeView>
+        <Authorized>
+            <MudMainContent Class="pt-16 px-16">
+                <MudContainer Class="my-16">
+                        @Body
+                </MudContainer>
+            </MudMainContent>
+        </Authorized>
+        <NotAuthorized>
+            @{ NavigationManager.NavigateTo("/login"); }
+        </NotAuthorized>
+    </AuthorizeView>
 </MudLayout>
 
 <MudThemeProvider IsDarkMode="true"/>

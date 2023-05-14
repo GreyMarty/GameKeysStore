@@ -1,0 +1,68 @@
+﻿@using Application.Models.ReadModels
+@using Application.UseCases.Keys.PurchaseKey
+@using MediatR
+@using System.Text
+
+@inject IMediator Mediator
+@inject IJSRuntime JS
+
+<div 
+    class="d-flex flex-grow-1 rounded mud-elevation-@(_hovered ? 4 : 2)"
+    style="height:100px"
+    @onmouseover="() => _hovered = true"
+    @onmouseout="() => _hovered = false">
+    <MudImage 
+        Width="160"
+        ObjectFit="ObjectFit.Cover"
+        Src="@Model.PreviewImage"
+        Class="rounded-l"
+        Style="height:100%"/>
+    <MudPaper
+        Elevation="0"
+        Class="flex-1 d-flex justify-space-between align-center pa-4 rounded-r"
+        Style=@($"background:{_theme.PaletteDark.DarkLighten}")>
+        <div style="height:100%">
+            <div class="d-flex gap-1 align-center">
+                <MudText
+                    Typo="Typo.h5"
+                    Style="font-weight:bold">
+                        @Model.GameName
+                </MudText>
+                <MudChip Size="Size.Small" Variant="Variant.Outlined" Color="Color.Tertiary"><b>@Model.Platform.Name</b></MudChip>
+            </div>
+            <div class="d-flex align-end mt-2">
+                @foreach (var category in Model.Categories)
+                {
+                    <MudChip Size="Size.Small" Variant="Variant.Outlined">@category.Name</MudChip>
+                }
+            </div>
+        </div>
+        <MudButton
+            Variant="Variant.Outlined"
+            Color="Color.Tertiary"
+            OnClick="Purchase">
+            @(Model.MinPrice == 0 ? "Free" : $"From {Math.Round(Model.MinPrice, 2)}$")
+        </MudButton>
+    </MudPaper>
+</div>
+
+@code {
+    private readonly MudTheme _theme = new();
+
+    private bool _hovered = false;
+
+    [Parameter]
+    public KeyGroupReadModel Model { get; set; }
+
+    private async void Purchase() 
+    {
+        var key = await Mediator.Send(new PurchaseKeyCommand(Model.GameId, Model.Platform.Id));
+
+        var stream = new MemoryStream();
+        await stream.WriteAsync(Encoding.UTF8.GetBytes(key.KeyString));
+        stream.Position = 0;
+
+        using var streamRef = new DotNetStreamReference(stream);
+        await JS.InvokeVoidAsync("downloadFileFromStream", $"{Model.GameName}_{Model.Platform.Name}_Key.txt", streamRef);
+    }
+}

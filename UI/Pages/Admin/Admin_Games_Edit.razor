@@ -1,5 +1,5 @@
-﻿@page "/games/new"
-@page "/games/{gameId:int}/edit"
+﻿@page "/admin/games/new"
+@page "/admin/games/{gameId:int}/edit"
 
 @using Application.Models.ReadModels
 @using Application.Models.WriteModels
@@ -107,7 +107,7 @@
                 await PhysicalStorage.DeleteFileAsync(image);
             }
 
-            NavigationManager.NavigateTo($"/games/{game.Id}/edit");
+            NavigationManager.NavigateTo($"admin/games");
         }
         catch (ValidationException ex)
         {

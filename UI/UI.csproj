@@ -28,4 +28,8 @@
     <None Include="wwwroot\img\game-no-image.jpg" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

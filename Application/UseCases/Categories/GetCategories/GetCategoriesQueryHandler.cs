@@ -28,8 +28,9 @@ internal class GetCategoriesQueryHandler : IRequestHandler<GetCategoriesQuery, I
             .AsNoTracking();
 
         var categories = await options.Apply(dbCategories)
+            .Select(x => new CategoryReadModel { Id = x.Id, Name = x.Name, GamesCount = x.Games.Count() })
             .ToArrayAsync();
 
-        return _mapper.Map<IEnumerable<CategoryReadModel>>(categories);
+        return categories;
     }
 }

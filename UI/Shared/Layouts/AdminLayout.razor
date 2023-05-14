@@ -4,7 +4,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 
-<AuthorizeView Roles="admin">
+<AuthorizeView Roles="admin, manager">
     <Authorized>
         <MudLayout>
             <MudAppBar Elevation="2">
@@ -16,7 +16,11 @@
                     <MudText Typo="Typo.h6">Blazing Key</MudText>
                 </MudDrawerHeader>
                 <MudNavMenu>
-                    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.People" Href="admin/users">Users</MudNavLink>
+                    <AuthorizeView Context="_" Roles="admin">
+                        <Authorized>
+                            <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.People" Href="admin/users">Users</MudNavLink>
+                        </Authorized>
+                    </AuthorizeView>
                     <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.VideogameAsset" Href="admin/games">Games</MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Key" Href="admin/keys">Keys</MudNavLink>
                     <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Category" Href="admin/categories">Categories</MudNavLink>
@@ -30,9 +34,7 @@
         </MudLayout>
     </Authorized>
     <NotAuthorized>
-        @{
-            NavigationManager.NavigateTo("/"); 
-        }
+        @{ NavigationManager.NavigateTo("/"); }
     </NotAuthorized>
 </AuthorizeView>
 

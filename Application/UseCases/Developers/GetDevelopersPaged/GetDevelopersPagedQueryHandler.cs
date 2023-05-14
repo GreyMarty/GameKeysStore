@@ -10,12 +10,10 @@ namespace Application.UseCases.Developers.GetDevelopersPaged;
 internal class GetDevelopersPagedQueryHandler : IRequestHandler<GetDevelopersPagedQuery, IPagedList<DeveloperReadModel>>
 {
     private readonly IApplicationDbContext _db;
-    private readonly IMapper _mapper;
 
     public GetDevelopersPagedQueryHandler(IApplicationDbContext db, IMapper mapper)
     {
         _db = db;
-        _mapper = mapper;
     }
 
     public async Task<IPagedList<DeveloperReadModel>> Handle(GetDevelopersPagedQuery request, CancellationToken cancellationToken)

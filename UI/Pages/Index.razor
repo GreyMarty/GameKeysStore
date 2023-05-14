@@ -1,17 +1,12 @@
 ﻿@page "/"
 
-<PageTitle>Index</PageTitle>
+@inject NavigationManager NavigationManager
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
-
-@code
-{
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-    }
-}
+<AuthorizeView Roles="admin, manager">
+    <Authorized>
+        @{ NavigationManager.NavigateTo("admin/games"); }
+    </Authorized>
+    <NotAuthorized>
+        @{ NavigationManager.NavigateTo("/games"); }
+    </NotAuthorized>
+</AuthorizeView>
